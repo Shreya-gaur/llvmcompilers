@@ -367,9 +367,11 @@ AST_EMIT(ASTNotExpr)
 
 // Factor -->
 AST_EMIT(ASTConstantExpr)
-	Value* retVal = nullptr;
-	
+		
 	// PA1: Implement
+	
+	Value* retVal = llvm::ConstantInt::get(llvm::Type::getInt32Ty(ctx.mGlobal), mValue);
+	//Value* retVal = nullptr;
 
 	return retVal;
 }
@@ -512,7 +514,18 @@ AST_EMIT(ASTDecl)
 // Statements
 AST_EMIT(ASTCompoundStmt)
 	// PA1: Implement
+	//if(!mDecls.empty() && !mStmts.empty()){
+		for (auto d : mDecls)
+		{
+			d->emitIR(ctx);
+		}
 
+		for (auto s : mStmts)
+		{
+			s->emitIR(ctx);
+		}
+	//}
+	
 	return nullptr;
 }
 
@@ -770,6 +783,18 @@ void ASTWhileStmt::emitIR_LoopPeeling(CodeContext& ctx) {
 
 AST_EMIT(ASTReturnStmt)
 	// PA1: Implement
+	
+	llvm::Type* returnType = ctx.mFunc->getReturnType();
+	IRBuilder<> build(ctx.mBlock);
+
+	if(returnType->isVoidTy()){
+		build.CreateRetVoid();
+	}
+
+	else{
+		llvm::Value* returnValue = mExpr->emitIR(ctx);
+		build.CreateRet(returnValue);
+	}
 
 	return nullptr;
 }
@@ -777,6 +802,8 @@ AST_EMIT(ASTReturnStmt)
 AST_EMIT(ASTExprStmt)
 	// PA1: Implement
 	// Just emit the expression, don't care about the value
+	
+	Value* exprVal = mExpr->emitIR(ctx);
 
 	return nullptr;
 }
