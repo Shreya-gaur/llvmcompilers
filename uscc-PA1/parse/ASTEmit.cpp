@@ -341,26 +341,65 @@ AST_EMIT(ASTLogicalOr)
 }
 
 AST_EMIT(ASTBinaryCmpOp)
-	Value* retVal = nullptr;
-	
 	// PA1: Implement
+	
+	Value* retVal = nullptr;
+	Value* lhsVal = mLHS->emitIR(ctx);
+	Value* rhsVal = mRHS->emitIR(ctx);
+
+	IRBuilder<> build(ctx.mBlock);
+
+	if(mOp == uscc::scan::Token::LessThan){
+		retVal = build.CreateICmpSLT(lhsVal, rhsVal, "lessThan");
+	}
+	else if(mOp == uscc::scan::Token::GreaterThan){
+		retVal = build.CreateICmpSGT(lhsVal, rhsVal, "greaterThan");	
+	}
+	else if(mOp == uscc::scan::Token::EqualTo){
+		retVal = build.CreateICmpEQ(lhsVal, rhsVal, "equalto");	
+	}
+	else if(mOp == uscc::scan::Token::NotEqual){
+		retVal = build.CreateICmpNE(lhsVal, rhsVal, "notequal");	
+	}
+
+	retVal = build.CreateZExt(retVal, llvm::Type::getInt32Ty(ctx.mGlobal), "casting");
 	
 	return retVal;
 }
 
 AST_EMIT(ASTBinaryMathOp)
-	Value* retVal = nullptr;
-	
 	// PA1: Implement
+
+	Value* retVal = nullptr;
+	Value* lhsVal = mLHS->emitIR(ctx);
+	Value* rhsVal = mRHS->emitIR(ctx);
+
+	IRBuilder<> build(ctx.mBlock);
+
+	if(mOp == uscc::scan::Token::Plus){
+		retVal = build.CreateAdd(lhsVal, rhsVal, "add", false, false);
+	}
+	else if(mOp == uscc::scan::Token::Minus){
+		retVal = build.CreateSub(lhsVal, rhsVal, "sub", false, false);	
+	}
+	else if(mOp == uscc::scan::Token::Mult){
+		retVal = build.CreateMul(lhsVal, rhsVal, "mul", false, false);	
+	}
+	else if(mOp == uscc::scan::Token::Div){
+		retVal = build.CreateSDiv(lhsVal, rhsVal, "div", false);	
+	}
+	else if(mOp == uscc::scan::Token::Mod){
+		retVal = build.CreateSRem(lhsVal, rhsVal, "rem");	
+	}
 	
 	return retVal;
 }
 
 // Value -->
 AST_EMIT(ASTNotExpr)
+	// PA1: Implement
 	Value* retVal = nullptr;
 	
-	// PA1: Implement
 
 	return retVal;
 }
@@ -369,9 +408,14 @@ AST_EMIT(ASTNotExpr)
 AST_EMIT(ASTConstantExpr)
 		
 	// PA1: Implement
-	
-	Value* retVal = llvm::ConstantInt::get(llvm::Type::getInt32Ty(ctx.mGlobal), mValue);
-	//Value* retVal = nullptr;
+	Value* retVal = nullptr;
+
+	if(mType == Type::Int){
+		retVal = ConstantInt::get(llvm::Type::getInt32Ty(ctx.mGlobal), mValue);
+	}
+	else if(mType == Type::Char){
+		retVal = ConstantInt::get(llvm::Type::getInt8Ty(ctx.mGlobal), mValue);
+	}
 
 	return retVal;
 }
@@ -445,17 +489,28 @@ AST_EMIT(ASTFuncExpr)
 }
 
 AST_EMIT(ASTIncExpr)
-	Value* retVal = nullptr;
-	
 	// PA1: Implement
+
+	Value* identVal = mIdent.readFrom(ctx);
+	Value* retVal = ConstantInt::get(identVal->getType(), 1);
+
+	IRBuilder<> build(ctx.mBlock);
+	retVal = build.CreateAdd(identVal, retVal, "add", false, false);	
+
+	mIdent.writeTo(ctx, retVal);
 
 	return retVal;
 }
 
 AST_EMIT(ASTDecExpr)
-	Value* retVal = nullptr;
-	
-	// PA1: Implement
+
+	Value* identVal = mIdent.readFrom(ctx);
+	Value* retVal = ConstantInt::get(identVal->getType(), 1);
+
+	IRBuilder<> build(ctx.mBlock);
+	retVal = build.CreateSub(identVal, retVal, "sub", false, false);	
+
+	mIdent.writeTo(ctx, retVal);
     
 	return retVal;
 }
