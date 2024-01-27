@@ -397,9 +397,14 @@ AST_EMIT(ASTBinaryMathOp)
 
 // Value -->
 AST_EMIT(ASTNotExpr)
-	// PA1: Implement
-	Value* retVal = nullptr;
 	
+	// PA1: Implement
+	Value* retVal = mExpr->emitIR(ctx);
+
+	IRBuilder<> build(ctx.mBlock);
+	retVal = build.CreateICmpEQ(retVal, ctx.mZero, "equalto");	
+	
+	retVal = build.CreateZExt(retVal, llvm::Type::getInt32Ty(ctx.mGlobal), "casting");
 
 	return retVal;
 }
@@ -589,6 +594,9 @@ AST_EMIT(ASTAssignStmt)
 	// assignments to happen later for full arrays
 	
 	// PA1: Implement
+	Value* retVal = mExpr->emitIR(ctx);
+
+	mIdent.writeTo(ctx, retVal);
 
 	return nullptr;
 }
@@ -610,7 +618,44 @@ AST_EMIT(ASTAssignArrayStmt)
 
 AST_EMIT(ASTIfStmt)
 	// PA1: Implement
-    //
+	auto currBlock = ctx.mBlock;
+
+	auto ifThenBB = BasicBlock::Create(ctx.mGlobal, "if.then", ctx.mFunc);
+	
+	llvm::BasicBlock* ifElseBB;
+	if(mElseStmt != nullptr)
+		ifElseBB = BasicBlock::Create(ctx.mGlobal, "if.else", ctx.mFunc);
+	
+	auto ifEndBB = BasicBlock::Create(ctx.mGlobal, "if.end", ctx.mFunc);
+
+	{	
+		Value* cond = mExpr->emitIR(ctx);
+		IRBuilder<> build(ctx.mBlock);
+		Value* boolVal = build.CreateICmpNE(cond, ctx.mZero, "toBool");
+		if(mElseStmt != nullptr)
+			build.CreateCondBr(boolVal, ifThenBB, ifElseBB);
+		else
+			build.CreateCondBr(boolVal, ifThenBB, ifEndBB);
+	}
+
+	ctx.mBlock = ifThenBB;
+	{
+		Value* thenBody = mThenStmt->emitIR(ctx);
+		IRBuilder<> build(ctx.mBlock);
+		build.CreateBr(ifEndBB);
+	}
+
+	if(mElseStmt != nullptr){
+		ctx.mBlock = ifElseBB;
+		{	
+			Value* elseBody = mElseStmt->emitIR(ctx);
+			IRBuilder<> build(ctx.mBlock);
+			build.CreateBr(ifEndBB);
+		}
+	}
+
+	ctx.mBlock = ifEndBB;
+
 	return nullptr;
 }
 
@@ -622,6 +667,37 @@ AST_EMIT(ASTWhileStmt)
     else {
 	  // PA1: Implement
       // IR lowering for ASTWhileStmt when the loop peeling is not possible
+	 	
+		auto currBlock = ctx.mBlock;
+
+		auto WhileCondBB = BasicBlock::Create(ctx.mGlobal, "while.cond", ctx.mFunc);
+
+		auto WhileBodyBB = BasicBlock::Create(ctx.mGlobal, "while.body", ctx.mFunc);
+		
+		auto WhileEndBB = BasicBlock::Create(ctx.mGlobal, "while.end", ctx.mFunc);
+		
+		{
+			IRBuilder<> build(ctx.mBlock);
+			build.CreateBr(WhileCondBB);
+		}
+
+		ctx.mBlock = WhileCondBB;
+		{
+			Value* cond = mExpr->emitIR(ctx);
+			IRBuilder<> build(ctx.mBlock);
+			Value* boolVal = build.CreateICmpNE(cond, ctx.mZero, "toBool");
+			build.CreateCondBr(boolVal, WhileBodyBB, WhileEndBB);
+		}
+
+		ctx.mBlock = WhileBodyBB;
+		{
+			Value* loopBody = mLoopStmt->emitIR(ctx);
+			IRBuilder<> build(ctx.mBlock);
+			build.CreateBr(WhileCondBB);
+		}
+
+		ctx.mBlock = WhileEndBB;
+
     }
     
 	return nullptr;
@@ -834,6 +910,65 @@ void ASTWhileStmt::emitIR_LoopPeeling(CodeContext& ctx) {
   // PA1: Implement
   // Follow 6 steps in PA1 description.
   // Please refer to the 1st-loop-iteration peeling section
+
+	auto WhileCondBB = BasicBlock::Create(ctx.mGlobal, "while.cond", ctx.mFunc);
+
+	auto WhileBodyBB = BasicBlock::Create(ctx.mGlobal, "while.body", ctx.mFunc);
+	
+	auto WhileEndBB = BasicBlock::Create(ctx.mGlobal, "while.end", ctx.mFunc);
+  
+  //Step 1: Emitting the loop condition instruction in the current basic block
+	auto PreheaderOrBB = replicate_basicblock(ctx);
+	auto PreheaderOpBB = replicate_basicblock(ctx);
+	
+
+  //Step 2: Removing the LLVM instructions in the current basic block
+    RemovePreHeader(ctx);
+
+
+  //Step 3: Creating conditional branch in inside the current Preheader.
+	{	
+		Value* loopCond = mExpr->emitIR(ctx);
+		IRBuilder<> build(ctx.mBlock);
+		Value* boolVal = build.CreateICmpNE(loopCond, ctx.mZero, "toBool");
+		build.CreateCondBr(boolVal, PreheaderOpBB, PreheaderOrBB);
+	}
+	
+	
+  //Step 4: Preparing the extended preheader block
+  	ctx.mBlock = PreheaderOpBB;
+	{
+		Value* loopBody = mLoopStmt->emitIR(ctx);
+		IRBuilder<> build(ctx.mBlock);
+		build.CreateBr(WhileCondBB);
+	}
+
+
+  //Step 5: Create the rest of the while loop
+	ctx.mBlock = WhileCondBB;
+	{	
+		Value* loopCond = mExpr->emitIR(ctx);
+		IRBuilder<> build(ctx.mBlock);
+		Value* boolVal = build.CreateICmpNE(loopCond, ctx.mZero, "toBool");
+		build.CreateCondBr(boolVal, WhileBodyBB, WhileEndBB);
+	}
+
+	ctx.mBlock = WhileBodyBB;
+	{
+		Value* loopBody = mLoopStmt->emitIR(ctx);
+		IRBuilder<> build(ctx.mBlock);
+		build.CreateBr(WhileCondBB);
+	}
+	
+  //Step 6: Creating the unconditional jump from PreheaderOr to End
+  	ctx.mBlock = PreheaderOrBB;
+	{
+		IRBuilder<> build(ctx.mBlock);
+		build.CreateBr(WhileEndBB);
+	}
+
+	ctx.mBlock = WhileEndBB;
+
 }
 
 AST_EMIT(ASTReturnStmt)

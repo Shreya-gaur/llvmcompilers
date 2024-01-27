@@ -58,6 +58,9 @@ public:
     virtual ASTNode* reconstruct(CodeContext& ctx, bool ssa = false) noexcept = 0;
 	virtual llvm::Value* emitIR(CodeContext& ctx) noexcept = 0;
 	virtual ~ASTNode() { }
+	virtual std::string getNodeType(){
+			return "";
+	};
     llvm::BasicBlock* llvmBasicBlock;
 protected:
 	ASTNode(const ASTNode& copy) { }
@@ -70,6 +73,9 @@ class ASTProgram : public ASTNode
 {
 public:
 	void addFunction(std::shared_ptr<ASTFunction> func) noexcept;
+	std::string getNodeType(){
+			return "program";
+	};
 	AST_DECL_PRINT_EMIT();
 private:
 	std::list<std::shared_ptr<ASTFunction>> mFuncs;
@@ -88,12 +94,15 @@ public:
 	, mReturnType(returnType)
 	, mScopeTable(scopeTable)
 	{ }
-	
 	// Add an argument to this function
 	void addArg(std::shared_ptr<ASTArgDecl> arg) noexcept;
 		
 	// Set the compound statement body
 	void setBody(std::shared_ptr<ASTCompoundStmt> body) noexcept;
+
+	std::string getNodeType(){
+			return "function";
+	};
 	
 	Type getReturnType() const noexcept
 	{
@@ -127,6 +136,10 @@ public:
 	ASTArgDecl(Identifier& ident) noexcept
 	: mIdent(ident)
 	{ }
+
+	std::string getNodeType(){
+			return "argDecl";
+	};
 	
 	Type getType() const noexcept
 	{
@@ -150,6 +163,10 @@ public:
 	ASTExpr() noexcept
 	: mType(Type::Void)
 	{ }
+
+	std::string getNodeType(){
+			return "Expr";
+	};
 	
 	Type getType() const noexcept
 	{
@@ -192,6 +209,9 @@ public:
 class ASTLogicalAnd : public ASTExpr
 {
 public:
+	std::string getNodeType(){
+			return "logicalAnd";
+	};
 	// We need to be able to manually set the lhs/rhs
 	void setLHS(std::shared_ptr<ASTExpr> lhs) noexcept
 	{
@@ -217,6 +237,9 @@ private:
 class ASTLogicalOr : public ASTExpr
 {
 public:
+	std::string getNodeType(){
+			return "logicalOr";
+	};
 	// We need to be able to manually set the lhs/rhs
 	void setLHS(std::shared_ptr<ASTExpr> lhs) noexcept
 	{
@@ -245,6 +268,10 @@ public:
 	ASTBinaryCmpOp(scan::Token::Tokens op) noexcept
 	: mOp(op)
 	{ }
+
+	std::string getNodeType(){
+			return "BinaryCmp";
+	};
 	
 	// We need to be able to manually set the lhs/rhs
 	void setLHS(std::shared_ptr<ASTExpr> lhs) noexcept
@@ -275,6 +302,10 @@ public:
 	ASTBinaryMathOp(scan::Token::Tokens op) noexcept
 	: mOp(op)
 	{ }
+
+	std::string getNodeType(){
+			return "BinaryMath";
+	};
 	
 	// We need to be able to manually set the lhs/rhs
 	void setLHS(std::shared_ptr<ASTExpr> lhs) noexcept
@@ -310,6 +341,9 @@ public:
 	{
 		mType = mExpr->getType();
 	}
+	std::string getNodeType(){
+			return "not";
+	};
 	AST_DECL_PRINT_EMIT();
 private:
 	std::shared_ptr<ASTExpr> mExpr;
@@ -321,6 +355,9 @@ class ASTConstantExpr : public ASTExpr
 {
 public:
 	ASTConstantExpr(const std::string& constStr);
+	std::string getNodeType(){
+			return "constant";
+	};
 	int getValue() const noexcept
 	{
 		return mValue;
@@ -345,6 +382,9 @@ class ASTStringExpr : public ASTExpr
 {
 public:
 	ASTStringExpr(const std::string& str, StringTable& tbl);
+	std::string getNodeType(){
+			return "string";
+	};
 	size_t getLength() const noexcept
 	{
 		return mString->getText().size();
@@ -363,6 +403,9 @@ public:
 	{
 		mType = mIdent.getType();
 	}
+	std::string getNodeType(){
+			return "ident";
+	};
 	AST_DECL_PRINT_EMIT();
 private:
 	Identifier& mIdent;
@@ -384,6 +427,9 @@ public:
 			mType = Type::Char;
 		}
 	}
+	std::string getNodeType(){
+			return "array";
+	};
 	AST_DECL_PRINT_EMIT();
 private:
 	std::shared_ptr<ASTArraySub> mArray;
@@ -405,6 +451,9 @@ public:
 			mType = Type::Void;
 		}
 	}
+	std::string getNodeType(){
+			return "funccall";
+	};
 	
 	void addArg(std::shared_ptr<ASTExpr> arg) noexcept;
 	size_t getNumArgs() const noexcept
@@ -427,6 +476,9 @@ public:
 	{
 		mType = mIdent.getType();
 	}
+	std::string getNodeType(){
+			return "inc";
+	};
 	AST_DECL_PRINT_EMIT();
 private:
 	Identifier& mIdent;
@@ -441,6 +493,9 @@ public:
 	{
 		mType = mIdent.getType();
 	}
+	std::string getNodeType(){
+			return "dec";
+	};
 	AST_DECL_PRINT_EMIT();
 private:
 	Identifier& mIdent;
@@ -454,6 +509,9 @@ public:
 	{
 		mType = mArray->getType();
 	}
+	std::string getNodeType(){
+			return "arrayaddr";
+	};
 	AST_DECL_PRINT_EMIT();
 private:
 	std::shared_ptr<ASTArraySub> mArray;
@@ -468,6 +526,9 @@ public:
 	{
 		mType = Type::Int;
 	}
+	std::string getNodeType(){
+			return "intexpr";
+	};
 	
 	std::shared_ptr<ASTExpr> getChild() noexcept
 	{
@@ -488,6 +549,9 @@ public:
 	{
 		mType = Type::Char;
 	}
+	std::string getNodeType(){
+			return "charexpr";
+	};
 	
 	std::shared_ptr<ASTExpr> getChild() noexcept
 	{
@@ -507,6 +571,9 @@ public:
 	: mIdent(ident)
 	, mExpr(expr)
 	{ }
+	std::string getNodeType(){
+			return "decl";
+	};
 	AST_DECL_PRINT_EMIT();
 private:
 	Identifier& mIdent;
@@ -516,13 +583,16 @@ private:
 // Statement AST Nodes
 class ASTStmt : public ASTNode
 {
-	
+	public:
 };
 
 class ASTCompoundStmt : public ASTStmt
 {
 public:
 	AST_DECL_PRINT_EMIT();
+	std::string getNodeType(){
+			return "compound";
+	};
 	void addDecl(std::shared_ptr<ASTDecl> decl) noexcept;
 	void addStmt(std::shared_ptr<ASTStmt> stmt) noexcept;
 	std::shared_ptr<ASTStmt> getLastStmt() noexcept;
@@ -552,6 +622,9 @@ public:
 	: mArray(array)
 	, mExpr(expr)
 	{ }
+	std::string getNodeType(){
+			return "arrayassign";
+	};
 	AST_DECL_PRINT_EMIT();
 private:
 	std::shared_ptr<ASTArraySub> mArray;
@@ -567,6 +640,10 @@ public:
 	, mThenStmt(thenStmt)
 	, mElseStmt(elseStmt)
 	{ }
+	std::string getNodeType()
+	{
+		return "if";
+	}
 	AST_DECL_PRINT_EMIT();
 
 private:
@@ -583,6 +660,10 @@ public:
 	, mLoopStmt(loopStmt)
     , mPeeling(false)
 	{ }
+	std::string getNodeType()
+	{
+		return "while";
+	}
 	AST_DECL_PRINT_EMIT();
     std::shared_ptr<ASTIfStmt> PeelingToAST(CodeContext& ctx, std::set<std::shared_ptr<ASTStmt>> preHeader=std::set<std::shared_ptr<ASTStmt>>());
     bool mPeeling;
@@ -605,6 +686,9 @@ public:
 	ASTReturnStmt(std::shared_ptr<ASTExpr> expr) noexcept
 	: mExpr(expr)
 	{ }
+	std::string getNodeType(){
+			return "return";
+	};
 	AST_DECL_PRINT_EMIT();
 private:
 	std::shared_ptr<ASTExpr> mExpr;
@@ -616,6 +700,9 @@ public:
 	ASTExprStmt(std::shared_ptr<ASTExpr> expr) noexcept
 	: mExpr(expr)
 	{ }
+	std::string getNodeType(){
+			return "exprstmt";
+	};
 	AST_DECL_PRINT_EMIT();
 private:
 	std::shared_ptr<ASTExpr> mExpr;
