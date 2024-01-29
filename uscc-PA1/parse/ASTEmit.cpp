@@ -574,17 +574,16 @@ AST_EMIT(ASTDecl)
 // Statements
 AST_EMIT(ASTCompoundStmt)
 	// PA1: Implement
-	//if(!mDecls.empty() && !mStmts.empty()){
-		for (auto d : mDecls)
-		{
-			d->emitIR(ctx);
-		}
+	// Iterate through Decls and Stmts and just call emit on each
+	for (auto d : mDecls)
+	{
+		d->emitIR(ctx);
+	}
 
-		for (auto s : mStmts)
-		{
-			s->emitIR(ctx);
-		}
-	//}
+	for (auto s : mStmts)
+	{
+		s->emitIR(ctx);
+	}
 	
 	return nullptr;
 }
@@ -668,18 +667,20 @@ AST_EMIT(ASTWhileStmt)
 	  // PA1: Implement
       // IR lowering for ASTWhileStmt when the loop peeling is not possible
 	 	
-		auto currBlock = ctx.mBlock;
-
+		// Create basic blocks for while condition, body and end
 		auto WhileCondBB = BasicBlock::Create(ctx.mGlobal, "while.cond", ctx.mFunc);
 
 		auto WhileBodyBB = BasicBlock::Create(ctx.mGlobal, "while.body", ctx.mFunc);
 		
 		auto WhileEndBB = BasicBlock::Create(ctx.mGlobal, "while.end", ctx.mFunc);
 		
+		//Creating an unconditional branch to the While condition
 		{
 			IRBuilder<> build(ctx.mBlock);
 			build.CreateBr(WhileCondBB);
 		}
+
+		//Lowering the conditional expression used in while
 
 		ctx.mBlock = WhileCondBB;
 		{
@@ -688,6 +689,8 @@ AST_EMIT(ASTWhileStmt)
 			Value* boolVal = build.CreateICmpNE(cond, ctx.mZero, "toBool");
 			build.CreateCondBr(boolVal, WhileBodyBB, WhileEndBB);
 		}
+
+		//Lowering the loop body used in while
 
 		ctx.mBlock = WhileBodyBB;
 		{
@@ -973,10 +976,11 @@ void ASTWhileStmt::emitIR_LoopPeeling(CodeContext& ctx) {
 
 AST_EMIT(ASTReturnStmt)
 	// PA1: Implement
-	
+	// Get the return type of the Return Statement
 	llvm::Type* returnType = ctx.mFunc->getReturnType();
 	IRBuilder<> build(ctx.mBlock);
 
+	// lower the return type of the Return Statement
 	if(returnType->isVoidTy()){
 		build.CreateRetVoid();
 	}

@@ -73,7 +73,7 @@ class ASTProgram : public ASTNode
 {
 public:
 	void addFunction(std::shared_ptr<ASTFunction> func) noexcept;
-	std::string getNodeType(){
+	std::string getNodeType() override{
 			return "program";
 	};
 	AST_DECL_PRINT_EMIT();
@@ -100,7 +100,7 @@ public:
 	// Set the compound statement body
 	void setBody(std::shared_ptr<ASTCompoundStmt> body) noexcept;
 
-	std::string getNodeType(){
+	std::string getNodeType() override{
 			return "function";
 	};
 	
@@ -137,7 +137,7 @@ public:
 	: mIdent(ident)
 	{ }
 
-	std::string getNodeType(){
+	std::string getNodeType() override{
 			return "argDecl";
 	};
 	
@@ -164,7 +164,7 @@ public:
 	: mType(Type::Void)
 	{ }
 
-	std::string getNodeType(){
+	std::string getNodeType() override{
 			return "Expr";
 	};
 	
@@ -209,7 +209,7 @@ public:
 class ASTLogicalAnd : public ASTExpr
 {
 public:
-	std::string getNodeType(){
+	std::string getNodeType() override{
 			return "logicalAnd";
 	};
 	// We need to be able to manually set the lhs/rhs
@@ -237,7 +237,7 @@ private:
 class ASTLogicalOr : public ASTExpr
 {
 public:
-	std::string getNodeType(){
+	std::string getNodeType() override{
 			return "logicalOr";
 	};
 	// We need to be able to manually set the lhs/rhs
@@ -269,8 +269,8 @@ public:
 	: mOp(op)
 	{ }
 
-	std::string getNodeType(){
-			return "BinaryCmp";
+	std::string getNodeType() override{
+			return "binaryCmp";
 	};
 	
 	// We need to be able to manually set the lhs/rhs
@@ -303,8 +303,8 @@ public:
 	: mOp(op)
 	{ }
 
-	std::string getNodeType(){
-			return "BinaryMath";
+	std::string getNodeType() override{
+			return "binaryMath";
 	};
 	
 	// We need to be able to manually set the lhs/rhs
@@ -341,7 +341,7 @@ public:
 	{
 		mType = mExpr->getType();
 	}
-	std::string getNodeType(){
+	std::string getNodeType() override{
 			return "not";
 	};
 	AST_DECL_PRINT_EMIT();
@@ -355,7 +355,7 @@ class ASTConstantExpr : public ASTExpr
 {
 public:
 	ASTConstantExpr(const std::string& constStr);
-	std::string getNodeType(){
+	std::string getNodeType() override{
 			return "constant";
 	};
 	int getValue() const noexcept
@@ -382,7 +382,7 @@ class ASTStringExpr : public ASTExpr
 {
 public:
 	ASTStringExpr(const std::string& str, StringTable& tbl);
-	std::string getNodeType(){
+	std::string getNodeType() override{
 			return "string";
 	};
 	size_t getLength() const noexcept
@@ -403,7 +403,7 @@ public:
 	{
 		mType = mIdent.getType();
 	}
-	std::string getNodeType(){
+	std::string getNodeType() override{
 			return "ident";
 	};
 	AST_DECL_PRINT_EMIT();
@@ -427,7 +427,7 @@ public:
 			mType = Type::Char;
 		}
 	}
-	std::string getNodeType(){
+	std::string getNodeType() override{
 			return "array";
 	};
 	AST_DECL_PRINT_EMIT();
@@ -451,8 +451,8 @@ public:
 			mType = Type::Void;
 		}
 	}
-	std::string getNodeType(){
-			return "funccall";
+	std::string getNodeType() override{
+			return "funcCall";
 	};
 	
 	void addArg(std::shared_ptr<ASTExpr> arg) noexcept;
@@ -476,7 +476,7 @@ public:
 	{
 		mType = mIdent.getType();
 	}
-	std::string getNodeType(){
+	std::string getNodeType() override{
 			return "inc";
 	};
 	AST_DECL_PRINT_EMIT();
@@ -493,7 +493,7 @@ public:
 	{
 		mType = mIdent.getType();
 	}
-	std::string getNodeType(){
+	std::string getNodeType() override{
 			return "dec";
 	};
 	AST_DECL_PRINT_EMIT();
@@ -509,8 +509,8 @@ public:
 	{
 		mType = mArray->getType();
 	}
-	std::string getNodeType(){
-			return "arrayaddr";
+	std::string getNodeType() override{
+			return "arrayAddr";
 	};
 	AST_DECL_PRINT_EMIT();
 private:
@@ -526,8 +526,8 @@ public:
 	{
 		mType = Type::Int;
 	}
-	std::string getNodeType(){
-			return "intexpr";
+	std::string getNodeType() override{
+			return "intExpr";
 	};
 	
 	std::shared_ptr<ASTExpr> getChild() noexcept
@@ -549,8 +549,8 @@ public:
 	{
 		mType = Type::Char;
 	}
-	std::string getNodeType(){
-			return "charexpr";
+	std::string getNodeType() override{
+			return "charExpr";
 	};
 	
 	std::shared_ptr<ASTExpr> getChild() noexcept
@@ -571,7 +571,7 @@ public:
 	: mIdent(ident)
 	, mExpr(expr)
 	{ }
-	std::string getNodeType(){
+	std::string getNodeType() override{
 			return "decl";
 	};
 	AST_DECL_PRINT_EMIT();
@@ -583,14 +583,13 @@ private:
 // Statement AST Nodes
 class ASTStmt : public ASTNode
 {
-	public:
 };
 
 class ASTCompoundStmt : public ASTStmt
 {
 public:
 	AST_DECL_PRINT_EMIT();
-	std::string getNodeType(){
+	std::string getNodeType() override{
 			return "compound";
 	};
 	void addDecl(std::shared_ptr<ASTDecl> decl) noexcept;
@@ -622,8 +621,8 @@ public:
 	: mArray(array)
 	, mExpr(expr)
 	{ }
-	std::string getNodeType(){
-			return "arrayassign";
+	std::string getNodeType() override{
+			return "arrayAssign";
 	};
 	AST_DECL_PRINT_EMIT();
 private:
@@ -640,7 +639,7 @@ public:
 	, mThenStmt(thenStmt)
 	, mElseStmt(elseStmt)
 	{ }
-	std::string getNodeType()
+	std::string getNodeType() override
 	{
 		return "if";
 	}
@@ -660,7 +659,7 @@ public:
 	, mLoopStmt(loopStmt)
     , mPeeling(false)
 	{ }
-	std::string getNodeType()
+	std::string getNodeType()  override
 	{
 		return "while";
 	}
@@ -686,7 +685,7 @@ public:
 	ASTReturnStmt(std::shared_ptr<ASTExpr> expr) noexcept
 	: mExpr(expr)
 	{ }
-	std::string getNodeType(){
+	std::string getNodeType() override{
 			return "return";
 	};
 	AST_DECL_PRINT_EMIT();
@@ -700,8 +699,8 @@ public:
 	ASTExprStmt(std::shared_ptr<ASTExpr> expr) noexcept
 	: mExpr(expr)
 	{ }
-	std::string getNodeType(){
-			return "exprstmt";
+	std::string getNodeType() override{
+			return "exprStmt";
 	};
 	AST_DECL_PRINT_EMIT();
 private:
@@ -711,6 +710,9 @@ private:
 class ASTNullStmt : public ASTStmt
 {
 	AST_DECL_PRINT_EMIT();
+	std::string getNodeType() override{
+			return "nullStmt";
+	};
 };
 
 

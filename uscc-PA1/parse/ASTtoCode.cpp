@@ -2,7 +2,7 @@
 //  ASTtoCode.cpp
 //  uscc
 //
-
+#include <iostream>
 #include "ASTNodes.h"
 #include "Symbols.h"
 #include "Emitter.h"
@@ -121,7 +121,6 @@ ASTTOCODE(ASTBinaryCmpOp)
 	mLHS->ASTtoCode(output, depth);
 	output << " " << Token::Values[mOp]<< " ";
 	mRHS->ASTtoCode(output, depth + 1);
-	//output << ';';
 }
 
 ASTTOCODE(ASTBinaryMathOp)
@@ -129,7 +128,6 @@ ASTTOCODE(ASTBinaryMathOp)
 	mLHS->ASTtoCode(output, depth);
 	output << " " << Token::Values[mOp]<< " ";
 	mRHS->ASTtoCode(output, depth + 1);
-	//output << ';';
 }
 
 ASTTOCODE(ASTNotExpr)
@@ -146,7 +144,10 @@ ASTTOCODE(ASTConstantExpr)
 
 ASTTOCODE(ASTStringExpr)
     // PA1: Implement
+	std::string str = mString->getText();
 	output  << '"' << mString->getText();
+	if(str.back() == '\n') output << "\\n\"" ;
+	else output << "\"";
 }
 
 ASTTOCODE(ASTIdentExpr) // IdentExpr:
@@ -168,7 +169,7 @@ ASTTOCODE(ASTFuncExpr) // "FuncExpr: "
 	{
 		output << delim;
 		arg->ASTtoCode(output, depth);
-		if(arg->getNodeType() == "string") output << "\\n\"" ;
+		//if(arg->getNodeType() == "string") output << "\\n\"" ;
 		delim = actual_delim;
 	}
 	output << ")" << std::endl;
@@ -243,7 +244,6 @@ ASTTOCODE(ASTDecl) // "Decl: "
 			mExpr->ASTtoCode(output, depth + 1);
 		}
 	}
-	else if(mIdent.getType() == Type::CharArray) output << "\"";
 }
 
 // Statements
@@ -257,10 +257,7 @@ ASTTOCODE(ASTCompoundStmt) // CompoundStmt:"
 	for (auto stmt : mStmts)
 	{
 		stmt->ASTtoCode(output, depth);
-		//if(stmt->getNodeType == "while"){
-
-		//}
-		if(stmt->getNodeType() != "while" && stmt->getNodeType() != "if") output << ';';
+		if(stmt->getNodeType() != "while" && stmt->getNodeType() != "if" && stmt->getNodeType() != "compound") output << ';';
 	}
 }
 
@@ -268,12 +265,12 @@ ASTTOCODE(ASTReturnStmt) // "ReturnStmt:
     // PA1: Implement
 	if (!mExpr)
 	{
+		output << "return";
 	}
 	else
 	{
 		output << "return ";
 		mExpr->ASTtoCode(output, depth + 1);
-		//output << ';';
 	}
 }
 
@@ -286,8 +283,10 @@ ASTTOCODE(ASTAssignStmt) // "AssignStmt: "
 ASTTOCODE(ASTAssignArrayStmt) // "AssignArrayStmt:"
     // PA1: Implement
 	mArray->ASTtoCode(output, depth + 1);
+	output << " = ";
 	mExpr->ASTtoCode(output, depth + 1);
 }
+
 
 ASTTOCODE(ASTIfStmt) // "IfStmt: "
     // PA1: Implement
@@ -296,13 +295,17 @@ ASTTOCODE(ASTIfStmt) // "IfStmt: "
 	output << "){";
 	mThenStmt->ASTtoCode(output, depth + 1);
 	output << "}";
+	bool isPrintedOnce = false;
 	if (mElseStmt)
 	{
 		output << "else";
-		if(mElseStmt->getNodeType() != "if") output << "{" ;
+		if(mElseStmt->getNodeType() != "if"){
+			isPrintedOnce = true;				
+			output << "{" ;
+		}
 		else output << " ";
 		mElseStmt->ASTtoCode(output, depth + 1);
-		output << "}";
+		if(isPrintedOnce) output << "}";
 	}
 }
 
