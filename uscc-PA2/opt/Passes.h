@@ -105,8 +105,11 @@ struct NaturalLoops : public FunctionPass {
   bool dfsReachable(llvm::BasicBlock* current, llvm::BasicBlock* target, llvm::BasicBlock* excludeBlock,std::set<llvm::BasicBlock*> visitedBlocks);
   void getDominatedBlocks(llvm::BasicBlock* block, std::vector<llvm::BasicBlock *>& dominatedBlocks);
   virtual void getAnalysisUsage(llvm::AnalysisUsage &Info) const override;
-  void printBackEdge(llvm::BasicBlock *head, llvm::BasicBlock *tail);
-  void printNaturalLoop(std::vector<llvm::BasicBlock*>& naturalLoop);
+ // void printBackEdge(llvm::BasicBlock *head, llvm::BasicBlock *tail);
+ // void printNaturalLoop(std::vector<llvm::BasicBlock*>& naturalLoop);
+  void printBackEdge(std::string head, std::string tail);                                                      
+  void printNaturalLoop(std::set<std::string>& naturalLoop); 
+  void mapOutput(); 
   // save the current basic block you are visiting assuming it is a loop header
   llvm::BasicBlock *mHeader;
   // dominator tree

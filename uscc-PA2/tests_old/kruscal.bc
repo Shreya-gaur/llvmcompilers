@@ -1,0 +1,325 @@
+; ModuleID = 'kruscal.c'
+target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64-S128"
+target triple = "x86_64-unknown-linux-gnu"
+
+%struct.Edge = type { i32, i32, i32 }
+%struct.Subset = type { i32, i32 }
+
+@.str = private unnamed_addr constant [50 x i8] c"Minimum Spanning Tree using Kruskal's Algorithm:\0A\00", align 1
+@.str1 = private unnamed_addr constant [15 x i8] c"(%d, %d) - %d\0A\00", align 1
+@main.edges = private unnamed_addr constant [5 x %struct.Edge] [%struct.Edge { i32 0, i32 1, i32 10 }, %struct.Edge { i32 0, i32 2, i32 6 }, %struct.Edge { i32 0, i32 3, i32 5 }, %struct.Edge { i32 1, i32 3, i32 15 }, %struct.Edge { i32 2, i32 3, i32 4 }], align 16
+
+define i32 @find(%struct.Subset* %subsets, i32 %i) nounwind uwtable {
+entry:
+  %subsets.addr = alloca %struct.Subset*, align 8
+  %i.addr = alloca i32, align 4
+  store %struct.Subset* %subsets, %struct.Subset** %subsets.addr, align 8
+  store i32 %i, i32* %i.addr, align 4
+  %0 = load i32* %i.addr, align 4
+  %idxprom = sext i32 %0 to i64
+  %1 = load %struct.Subset** %subsets.addr, align 8
+  %arrayidx = getelementptr inbounds %struct.Subset* %1, i64 %idxprom
+  %parent = getelementptr inbounds %struct.Subset* %arrayidx, i32 0, i32 0
+  %2 = load i32* %parent, align 4
+  %3 = load i32* %i.addr, align 4
+  %cmp = icmp ne i32 %2, %3
+  br i1 %cmp, label %if.then, label %if.end
+
+if.then:                                          ; preds = %entry
+  %4 = load %struct.Subset** %subsets.addr, align 8
+  %5 = load i32* %i.addr, align 4
+  %idxprom1 = sext i32 %5 to i64
+  %6 = load %struct.Subset** %subsets.addr, align 8
+  %arrayidx2 = getelementptr inbounds %struct.Subset* %6, i64 %idxprom1
+  %parent3 = getelementptr inbounds %struct.Subset* %arrayidx2, i32 0, i32 0
+  %7 = load i32* %parent3, align 4
+  %call = call i32 @find(%struct.Subset* %4, i32 %7)
+  %8 = load i32* %i.addr, align 4
+  %idxprom4 = sext i32 %8 to i64
+  %9 = load %struct.Subset** %subsets.addr, align 8
+  %arrayidx5 = getelementptr inbounds %struct.Subset* %9, i64 %idxprom4
+  %parent6 = getelementptr inbounds %struct.Subset* %arrayidx5, i32 0, i32 0
+  store i32 %call, i32* %parent6, align 4
+  br label %if.end
+
+if.end:                                           ; preds = %if.then, %entry
+  %10 = load i32* %i.addr, align 4
+  %idxprom7 = sext i32 %10 to i64
+  %11 = load %struct.Subset** %subsets.addr, align 8
+  %arrayidx8 = getelementptr inbounds %struct.Subset* %11, i64 %idxprom7
+  %parent9 = getelementptr inbounds %struct.Subset* %arrayidx8, i32 0, i32 0
+  %12 = load i32* %parent9, align 4
+  ret i32 %12
+}
+
+define void @unionSets(%struct.Subset* %subsets, i32 %x, i32 %y) nounwind uwtable {
+entry:
+  %subsets.addr = alloca %struct.Subset*, align 8
+  %x.addr = alloca i32, align 4
+  %y.addr = alloca i32, align 4
+  %xroot = alloca i32, align 4
+  %yroot = alloca i32, align 4
+  store %struct.Subset* %subsets, %struct.Subset** %subsets.addr, align 8
+  store i32 %x, i32* %x.addr, align 4
+  store i32 %y, i32* %y.addr, align 4
+  %0 = load %struct.Subset** %subsets.addr, align 8
+  %1 = load i32* %x.addr, align 4
+  %call = call i32 @find(%struct.Subset* %0, i32 %1)
+  store i32 %call, i32* %xroot, align 4
+  %2 = load %struct.Subset** %subsets.addr, align 8
+  %3 = load i32* %y.addr, align 4
+  %call1 = call i32 @find(%struct.Subset* %2, i32 %3)
+  store i32 %call1, i32* %yroot, align 4
+  %4 = load i32* %xroot, align 4
+  %idxprom = sext i32 %4 to i64
+  %5 = load %struct.Subset** %subsets.addr, align 8
+  %arrayidx = getelementptr inbounds %struct.Subset* %5, i64 %idxprom
+  %rank = getelementptr inbounds %struct.Subset* %arrayidx, i32 0, i32 1
+  %6 = load i32* %rank, align 4
+  %7 = load i32* %yroot, align 4
+  %idxprom2 = sext i32 %7 to i64
+  %8 = load %struct.Subset** %subsets.addr, align 8
+  %arrayidx3 = getelementptr inbounds %struct.Subset* %8, i64 %idxprom2
+  %rank4 = getelementptr inbounds %struct.Subset* %arrayidx3, i32 0, i32 1
+  %9 = load i32* %rank4, align 4
+  %cmp = icmp slt i32 %6, %9
+  br i1 %cmp, label %if.then, label %if.else
+
+if.then:                                          ; preds = %entry
+  %10 = load i32* %yroot, align 4
+  %11 = load i32* %xroot, align 4
+  %idxprom5 = sext i32 %11 to i64
+  %12 = load %struct.Subset** %subsets.addr, align 8
+  %arrayidx6 = getelementptr inbounds %struct.Subset* %12, i64 %idxprom5
+  %parent = getelementptr inbounds %struct.Subset* %arrayidx6, i32 0, i32 0
+  store i32 %10, i32* %parent, align 4
+  br label %if.end25
+
+if.else:                                          ; preds = %entry
+  %13 = load i32* %xroot, align 4
+  %idxprom7 = sext i32 %13 to i64
+  %14 = load %struct.Subset** %subsets.addr, align 8
+  %arrayidx8 = getelementptr inbounds %struct.Subset* %14, i64 %idxprom7
+  %rank9 = getelementptr inbounds %struct.Subset* %arrayidx8, i32 0, i32 1
+  %15 = load i32* %rank9, align 4
+  %16 = load i32* %yroot, align 4
+  %idxprom10 = sext i32 %16 to i64
+  %17 = load %struct.Subset** %subsets.addr, align 8
+  %arrayidx11 = getelementptr inbounds %struct.Subset* %17, i64 %idxprom10
+  %rank12 = getelementptr inbounds %struct.Subset* %arrayidx11, i32 0, i32 1
+  %18 = load i32* %rank12, align 4
+  %cmp13 = icmp sgt i32 %15, %18
+  br i1 %cmp13, label %if.then14, label %if.else18
+
+if.then14:                                        ; preds = %if.else
+  %19 = load i32* %xroot, align 4
+  %20 = load i32* %yroot, align 4
+  %idxprom15 = sext i32 %20 to i64
+  %21 = load %struct.Subset** %subsets.addr, align 8
+  %arrayidx16 = getelementptr inbounds %struct.Subset* %21, i64 %idxprom15
+  %parent17 = getelementptr inbounds %struct.Subset* %arrayidx16, i32 0, i32 0
+  store i32 %19, i32* %parent17, align 4
+  br label %if.end
+
+if.else18:                                        ; preds = %if.else
+  %22 = load i32* %xroot, align 4
+  %23 = load i32* %yroot, align 4
+  %idxprom19 = sext i32 %23 to i64
+  %24 = load %struct.Subset** %subsets.addr, align 8
+  %arrayidx20 = getelementptr inbounds %struct.Subset* %24, i64 %idxprom19
+  %parent21 = getelementptr inbounds %struct.Subset* %arrayidx20, i32 0, i32 0
+  store i32 %22, i32* %parent21, align 4
+  %25 = load i32* %xroot, align 4
+  %idxprom22 = sext i32 %25 to i64
+  %26 = load %struct.Subset** %subsets.addr, align 8
+  %arrayidx23 = getelementptr inbounds %struct.Subset* %26, i64 %idxprom22
+  %rank24 = getelementptr inbounds %struct.Subset* %arrayidx23, i32 0, i32 1
+  %27 = load i32* %rank24, align 4
+  %inc = add nsw i32 %27, 1
+  store i32 %inc, i32* %rank24, align 4
+  br label %if.end
+
+if.end:                                           ; preds = %if.else18, %if.then14
+  br label %if.end25
+
+if.end25:                                         ; preds = %if.end, %if.then
+  ret void
+}
+
+define i32 @compareEdges(i8* %a, i8* %b) nounwind uwtable {
+entry:
+  %a.addr = alloca i8*, align 8
+  %b.addr = alloca i8*, align 8
+  store i8* %a, i8** %a.addr, align 8
+  store i8* %b, i8** %b.addr, align 8
+  %0 = load i8** %a.addr, align 8
+  %1 = bitcast i8* %0 to %struct.Edge*
+  %weight = getelementptr inbounds %struct.Edge* %1, i32 0, i32 2
+  %2 = load i32* %weight, align 4
+  %3 = load i8** %b.addr, align 8
+  %4 = bitcast i8* %3 to %struct.Edge*
+  %weight1 = getelementptr inbounds %struct.Edge* %4, i32 0, i32 2
+  %5 = load i32* %weight1, align 4
+  %sub = sub nsw i32 %2, %5
+  ret i32 %sub
+}
+
+define void @kruskal(%struct.Edge* %edges, i32 %V, i32 %E) nounwind uwtable {
+entry:
+  %edges.addr = alloca %struct.Edge*, align 8
+  %V.addr = alloca i32, align 4
+  %E.addr = alloca i32, align 4
+  %subsets = alloca %struct.Subset*, align 8
+  %i = alloca i32, align 4
+  %i6 = alloca i32, align 4
+  %edgesCount = alloca i32, align 4
+  %nextEdge = alloca %struct.Edge, align 4
+  %x = alloca i32, align 4
+  %y = alloca i32, align 4
+  store %struct.Edge* %edges, %struct.Edge** %edges.addr, align 8
+  store i32 %V, i32* %V.addr, align 4
+  store i32 %E, i32* %E.addr, align 4
+  %0 = load i32* %V.addr, align 4
+  %conv = sext i32 %0 to i64
+  %mul = mul i64 %conv, 8
+  %call = call noalias i8* @malloc(i64 %mul) nounwind
+  %1 = bitcast i8* %call to %struct.Subset*
+  store %struct.Subset* %1, %struct.Subset** %subsets, align 8
+  store i32 0, i32* %i, align 4
+  br label %for.cond
+
+for.cond:                                         ; preds = %for.inc, %entry
+  %2 = load i32* %i, align 4
+  %3 = load i32* %V.addr, align 4
+  %cmp = icmp slt i32 %2, %3
+  br i1 %cmp, label %for.body, label %for.end
+
+for.body:                                         ; preds = %for.cond
+  %4 = load i32* %i, align 4
+  %5 = load i32* %i, align 4
+  %idxprom = sext i32 %5 to i64
+  %6 = load %struct.Subset** %subsets, align 8
+  %arrayidx = getelementptr inbounds %struct.Subset* %6, i64 %idxprom
+  %parent = getelementptr inbounds %struct.Subset* %arrayidx, i32 0, i32 0
+  store i32 %4, i32* %parent, align 4
+  %7 = load i32* %i, align 4
+  %idxprom2 = sext i32 %7 to i64
+  %8 = load %struct.Subset** %subsets, align 8
+  %arrayidx3 = getelementptr inbounds %struct.Subset* %8, i64 %idxprom2
+  %rank = getelementptr inbounds %struct.Subset* %arrayidx3, i32 0, i32 1
+  store i32 0, i32* %rank, align 4
+  br label %for.inc
+
+for.inc:                                          ; preds = %for.body
+  %9 = load i32* %i, align 4
+  %inc = add nsw i32 %9, 1
+  store i32 %inc, i32* %i, align 4
+  br label %for.cond
+
+for.end:                                          ; preds = %for.cond
+  %10 = load %struct.Edge** %edges.addr, align 8
+  %11 = bitcast %struct.Edge* %10 to i8*
+  %12 = load i32* %E.addr, align 4
+  %conv4 = sext i32 %12 to i64
+  call void @qsort(i8* %11, i64 %conv4, i64 12, i32 (i8*, i8*)* @compareEdges)
+  %call5 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([50 x i8]* @.str, i32 0, i32 0))
+  store i32 0, i32* %i6, align 4
+  store i32 0, i32* %edgesCount, align 4
+  br label %while.cond
+
+while.cond:                                       ; preds = %if.end, %for.end
+  %13 = load i32* %edgesCount, align 4
+  %14 = load i32* %V.addr, align 4
+  %sub = sub nsw i32 %14, 1
+  %cmp7 = icmp slt i32 %13, %sub
+  br i1 %cmp7, label %land.rhs, label %land.end
+
+land.rhs:                                         ; preds = %while.cond
+  %15 = load i32* %i6, align 4
+  %16 = load i32* %E.addr, align 4
+  %cmp9 = icmp slt i32 %15, %16
+  br label %land.end
+
+land.end:                                         ; preds = %land.rhs, %while.cond
+  %17 = phi i1 [ false, %while.cond ], [ %cmp9, %land.rhs ]
+  br i1 %17, label %while.body, label %while.end
+
+while.body:                                       ; preds = %land.end
+  %18 = load i32* %i6, align 4
+  %inc11 = add nsw i32 %18, 1
+  store i32 %inc11, i32* %i6, align 4
+  %idxprom12 = sext i32 %18 to i64
+  %19 = load %struct.Edge** %edges.addr, align 8
+  %arrayidx13 = getelementptr inbounds %struct.Edge* %19, i64 %idxprom12
+  %20 = bitcast %struct.Edge* %nextEdge to i8*
+  %21 = bitcast %struct.Edge* %arrayidx13 to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %20, i8* %21, i64 12, i32 4, i1 false)
+  %22 = load %struct.Subset** %subsets, align 8
+  %src = getelementptr inbounds %struct.Edge* %nextEdge, i32 0, i32 0
+  %23 = load i32* %src, align 4
+  %call14 = call i32 @find(%struct.Subset* %22, i32 %23)
+  store i32 %call14, i32* %x, align 4
+  %24 = load %struct.Subset** %subsets, align 8
+  %dest = getelementptr inbounds %struct.Edge* %nextEdge, i32 0, i32 1
+  %25 = load i32* %dest, align 4
+  %call15 = call i32 @find(%struct.Subset* %24, i32 %25)
+  store i32 %call15, i32* %y, align 4
+  %26 = load i32* %x, align 4
+  %27 = load i32* %y, align 4
+  %cmp16 = icmp ne i32 %26, %27
+  br i1 %cmp16, label %if.then, label %if.end
+
+if.then:                                          ; preds = %while.body
+  %src18 = getelementptr inbounds %struct.Edge* %nextEdge, i32 0, i32 0
+  %28 = load i32* %src18, align 4
+  %dest19 = getelementptr inbounds %struct.Edge* %nextEdge, i32 0, i32 1
+  %29 = load i32* %dest19, align 4
+  %weight = getelementptr inbounds %struct.Edge* %nextEdge, i32 0, i32 2
+  %30 = load i32* %weight, align 4
+  %call20 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([15 x i8]* @.str1, i32 0, i32 0), i32 %28, i32 %29, i32 %30)
+  %31 = load i32* %edgesCount, align 4
+  %inc21 = add nsw i32 %31, 1
+  store i32 %inc21, i32* %edgesCount, align 4
+  %32 = load %struct.Subset** %subsets, align 8
+  %33 = load i32* %x, align 4
+  %34 = load i32* %y, align 4
+  call void @unionSets(%struct.Subset* %32, i32 %33, i32 %34)
+  br label %if.end
+
+if.end:                                           ; preds = %if.then, %while.body
+  br label %while.cond
+
+while.end:                                        ; preds = %land.end
+  %35 = load %struct.Subset** %subsets, align 8
+  %36 = bitcast %struct.Subset* %35 to i8*
+  call void @free(i8* %36) nounwind
+  ret void
+}
+
+declare noalias i8* @malloc(i64) nounwind
+
+declare void @qsort(i8*, i64, i64, i32 (i8*, i8*)*)
+
+declare i32 @printf(i8*, ...)
+
+declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture, i64, i32, i1) nounwind
+
+declare void @free(i8*) nounwind
+
+define i32 @main() nounwind uwtable {
+entry:
+  %retval = alloca i32, align 4
+  %V = alloca i32, align 4
+  %E = alloca i32, align 4
+  %edges = alloca [5 x %struct.Edge], align 16
+  store i32 0, i32* %retval
+  store i32 4, i32* %V, align 4
+  store i32 5, i32* %E, align 4
+  %0 = bitcast [5 x %struct.Edge]* %edges to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %0, i8* bitcast ([5 x %struct.Edge]* @main.edges to i8*), i64 60, i32 16, i1 false)
+  %arraydecay = getelementptr inbounds [5 x %struct.Edge]* %edges, i32 0, i32 0
+  %1 = load i32* %V, align 4
+  %2 = load i32* %E, align 4
+  call void @kruskal(%struct.Edge* %arraydecay, i32 %1, i32 %2)
+  ret i32 0
+}

@@ -1,0 +1,4 @@
+Back Edge: while.cond <--- if.end23
+Natural Loop: while.cond while.body if.then3 if.end23 if.else while.cond5 land.rhs land.end while.body10 while.end if.then14 if.end22 if.else17 
+Back Edge: while.cond5 <--- while.body10
+Natural Loop: while.cond5 land.rhs land.end while.body10 

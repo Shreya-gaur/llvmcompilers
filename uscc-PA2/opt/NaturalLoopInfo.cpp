@@ -19,6 +19,8 @@
 #include <vector> 
 #include <set>
 #include <stack>
+#include<map>
+#include<string>
 
 using namespace llvm;
 using namespace std;
@@ -27,25 +29,50 @@ namespace uscc{
 
 namespace opt{
 
+std::map<std::pair<string, string>, std::set<string>> backEdgeLoopMap;
 
-void NaturalLoops::printBackEdge(BasicBlock *head, BasicBlock *tail){
+//void NaturalLoops::printBackEdge(BasicBlock *head, BasicBlock *tail){
+//
+//
+//    errs() << "Back Edge: " << head->getName() << " <--- " << tail->getName() << "\n";
+//
+//}
+void NaturalLoops::printBackEdge(string head, string tail){
 
+	    errs() << "Back Edge: " << head << " <--- " << tail << "\n";
 
-    errs() << "Back Edge: " << head->getName() << " <--- " << tail->getName() << "\n";
-
+		
 }
 
-void NaturalLoops::printNaturalLoop(std::vector<BasicBlock*>& naturalLoop){
+//void NaturalLoops::printNaturalLoop(std::vector<BasicBlock*>& naturalLoop){
+//
+//    // Print the blocks in the natural loop
+//    errs() << "Natural Loop: ";
+//    for (BasicBlock *BB : naturalLoop) {
+//      errs() << BB->getName() << " ";
+//    }
+//    errs() << "\n";
+//    
+//
+//}
+void NaturalLoops::printNaturalLoop(std::set<string> &naturalLoop){
 
-    // Print the blocks in the natural loop
-    errs() << "Natural Loop: ";
-    for (BasicBlock *BB : naturalLoop) {
-      errs() << BB->getName() << " ";
-    }
-    errs() << "\n";
-    
-
+	// Print the blocks in the natural loop
+	 errs() << "The size is "<<naturalLoop.size()<<", Natural Loop: ";
+	 for (auto BlockName: naturalLoop) {
+		   errs() << BlockName << " ";
+	 }
+	 errs() << "\n";
 }
+
+void NaturalLoops::mapOutput(){
+
+	for(auto mapIter:backEdgeLoopMap){
+	  printBackEdge(mapIter.first.first, mapIter.first.second);
+	  printNaturalLoop(mapIter.second);
+	}
+	
+} 
 
 bool NaturalLoops::runOnFunction(Function &F)
 {
@@ -60,6 +87,10 @@ bool NaturalLoops::runOnFunction(Function &F)
 		set<BasicBlock *> visited;
 		dfsFindBackEdge(mHeader, visited);		
 	}
+
+	mapOutput();
+
+	backEdgeLoopMap.clear();
 
 	return false;
 }
@@ -81,7 +112,7 @@ void NaturalLoops::dfsFindBackEdge(BasicBlock *current, set<BasicBlock *> &visit
 		else if(currbb == mHeader){
 			bool dom = mDT->dominates(mHeader, current);
 			if(dom){
-				printBackEdge(mHeader, current);
+			//	printBackEdge(mHeader, current);
 				findNaturalLoop(current);
 			}
 		}
@@ -112,7 +143,16 @@ void NaturalLoops::findNaturalLoop(BasicBlock *tail)
 		if(canReach) naturalLoopBB.push_back(iterator);
 	}
 
-	printNaturalLoop(naturalLoopBB);
+	//printNaturalLoop(naturalLoopBB);
+	
+	set<string> NaturalLoop;
+
+	for(auto it : naturalLoopBB){
+		NaturalLoop.insert(it->getName());
+	}
+	
+	pair<string,string> headtail = {mHeader->getName(), tail->getName()};
+	backEdgeLoopMap[headtail] = NaturalLoop;
 
 }
 

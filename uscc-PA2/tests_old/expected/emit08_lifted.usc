@@ -1,0 +1,11 @@
+int main()
+{
+    int x = 0;
+    while (x < 2000000000)
+    {
+        int y = 0;
+        ++x;
+    }
+    printf("%d\n", x);
+    return 0;
+}

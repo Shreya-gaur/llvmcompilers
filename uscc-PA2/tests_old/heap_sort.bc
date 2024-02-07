@@ -1,0 +1,250 @@
+; ModuleID = 'heap_sort.c'
+target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64-S128"
+target triple = "x86_64-unknown-linux-gnu"
+
+@.str = private unnamed_addr constant [4 x i8] c"%d \00", align 1
+@.str1 = private unnamed_addr constant [2 x i8] c"\0A\00", align 1
+@main.arr = private unnamed_addr constant [6 x i32] [i32 12, i32 11, i32 13, i32 5, i32 6, i32 7], align 16
+@.str2 = private unnamed_addr constant [17 x i8] c"Sorted array is\0A\00", align 1
+
+define void @swap(i32* %a, i32* %b) nounwind uwtable {
+entry:
+  %a.addr = alloca i32*, align 8
+  %b.addr = alloca i32*, align 8
+  %temp = alloca i32, align 4
+  store i32* %a, i32** %a.addr, align 8
+  store i32* %b, i32** %b.addr, align 8
+  %0 = load i32** %a.addr, align 8
+  %1 = load i32* %0, align 4
+  store i32 %1, i32* %temp, align 4
+  %2 = load i32** %b.addr, align 8
+  %3 = load i32* %2, align 4
+  %4 = load i32** %a.addr, align 8
+  store i32 %3, i32* %4, align 4
+  %5 = load i32* %temp, align 4
+  %6 = load i32** %b.addr, align 8
+  store i32 %5, i32* %6, align 4
+  ret void
+}
+
+define void @heapify(i32* %arr, i32 %N, i32 %i) nounwind uwtable {
+entry:
+  %arr.addr = alloca i32*, align 8
+  %N.addr = alloca i32, align 4
+  %i.addr = alloca i32, align 4
+  %largest = alloca i32, align 4
+  %left = alloca i32, align 4
+  %right = alloca i32, align 4
+  store i32* %arr, i32** %arr.addr, align 8
+  store i32 %N, i32* %N.addr, align 4
+  store i32 %i, i32* %i.addr, align 4
+  %0 = load i32* %i.addr, align 4
+  store i32 %0, i32* %largest, align 4
+  %1 = load i32* %i.addr, align 4
+  %mul = mul nsw i32 2, %1
+  %add = add nsw i32 %mul, 1
+  store i32 %add, i32* %left, align 4
+  %2 = load i32* %i.addr, align 4
+  %mul1 = mul nsw i32 2, %2
+  %add2 = add nsw i32 %mul1, 2
+  store i32 %add2, i32* %right, align 4
+  %3 = load i32* %left, align 4
+  %4 = load i32* %N.addr, align 4
+  %cmp = icmp slt i32 %3, %4
+  br i1 %cmp, label %land.lhs.true, label %if.end
+
+land.lhs.true:                                    ; preds = %entry
+  %5 = load i32* %left, align 4
+  %idxprom = sext i32 %5 to i64
+  %6 = load i32** %arr.addr, align 8
+  %arrayidx = getelementptr inbounds i32* %6, i64 %idxprom
+  %7 = load i32* %arrayidx, align 4
+  %8 = load i32* %largest, align 4
+  %idxprom3 = sext i32 %8 to i64
+  %9 = load i32** %arr.addr, align 8
+  %arrayidx4 = getelementptr inbounds i32* %9, i64 %idxprom3
+  %10 = load i32* %arrayidx4, align 4
+  %cmp5 = icmp sgt i32 %7, %10
+  br i1 %cmp5, label %if.then, label %if.end
+
+if.then:                                          ; preds = %land.lhs.true
+  %11 = load i32* %left, align 4
+  store i32 %11, i32* %largest, align 4
+  br label %if.end
+
+if.end:                                           ; preds = %if.then, %land.lhs.true, %entry
+  %12 = load i32* %right, align 4
+  %13 = load i32* %N.addr, align 4
+  %cmp6 = icmp slt i32 %12, %13
+  br i1 %cmp6, label %land.lhs.true7, label %if.end14
+
+land.lhs.true7:                                   ; preds = %if.end
+  %14 = load i32* %right, align 4
+  %idxprom8 = sext i32 %14 to i64
+  %15 = load i32** %arr.addr, align 8
+  %arrayidx9 = getelementptr inbounds i32* %15, i64 %idxprom8
+  %16 = load i32* %arrayidx9, align 4
+  %17 = load i32* %largest, align 4
+  %idxprom10 = sext i32 %17 to i64
+  %18 = load i32** %arr.addr, align 8
+  %arrayidx11 = getelementptr inbounds i32* %18, i64 %idxprom10
+  %19 = load i32* %arrayidx11, align 4
+  %cmp12 = icmp sgt i32 %16, %19
+  br i1 %cmp12, label %if.then13, label %if.end14
+
+if.then13:                                        ; preds = %land.lhs.true7
+  %20 = load i32* %right, align 4
+  store i32 %20, i32* %largest, align 4
+  br label %if.end14
+
+if.end14:                                         ; preds = %if.then13, %land.lhs.true7, %if.end
+  %21 = load i32* %largest, align 4
+  %22 = load i32* %i.addr, align 4
+  %cmp15 = icmp ne i32 %21, %22
+  br i1 %cmp15, label %if.then16, label %if.end21
+
+if.then16:                                        ; preds = %if.end14
+  %23 = load i32* %i.addr, align 4
+  %idxprom17 = sext i32 %23 to i64
+  %24 = load i32** %arr.addr, align 8
+  %arrayidx18 = getelementptr inbounds i32* %24, i64 %idxprom17
+  %25 = load i32* %largest, align 4
+  %idxprom19 = sext i32 %25 to i64
+  %26 = load i32** %arr.addr, align 8
+  %arrayidx20 = getelementptr inbounds i32* %26, i64 %idxprom19
+  call void @swap(i32* %arrayidx18, i32* %arrayidx20)
+  %27 = load i32** %arr.addr, align 8
+  %28 = load i32* %N.addr, align 4
+  %29 = load i32* %largest, align 4
+  call void @heapify(i32* %27, i32 %28, i32 %29)
+  br label %if.end21
+
+if.end21:                                         ; preds = %if.then16, %if.end14
+  ret void
+}
+
+define void @heapSort(i32* %arr, i32 %N) nounwind uwtable {
+entry:
+  %arr.addr = alloca i32*, align 8
+  %N.addr = alloca i32, align 4
+  %i = alloca i32, align 4
+  %i1 = alloca i32, align 4
+  store i32* %arr, i32** %arr.addr, align 8
+  store i32 %N, i32* %N.addr, align 4
+  %0 = load i32* %N.addr, align 4
+  %div = sdiv i32 %0, 2
+  %sub = sub nsw i32 %div, 1
+  store i32 %sub, i32* %i, align 4
+  br label %for.cond
+
+for.cond:                                         ; preds = %for.inc, %entry
+  %1 = load i32* %i, align 4
+  %cmp = icmp sge i32 %1, 0
+  br i1 %cmp, label %for.body, label %for.end
+
+for.body:                                         ; preds = %for.cond
+  %2 = load i32** %arr.addr, align 8
+  %3 = load i32* %N.addr, align 4
+  %4 = load i32* %i, align 4
+  call void @heapify(i32* %2, i32 %3, i32 %4)
+  br label %for.inc
+
+for.inc:                                          ; preds = %for.body
+  %5 = load i32* %i, align 4
+  %dec = add nsw i32 %5, -1
+  store i32 %dec, i32* %i, align 4
+  br label %for.cond
+
+for.end:                                          ; preds = %for.cond
+  %6 = load i32* %N.addr, align 4
+  %sub2 = sub nsw i32 %6, 1
+  store i32 %sub2, i32* %i1, align 4
+  br label %for.cond3
+
+for.cond3:                                        ; preds = %for.inc7, %for.end
+  %7 = load i32* %i1, align 4
+  %cmp4 = icmp sge i32 %7, 0
+  br i1 %cmp4, label %for.body5, label %for.end9
+
+for.body5:                                        ; preds = %for.cond3
+  %8 = load i32** %arr.addr, align 8
+  %arrayidx = getelementptr inbounds i32* %8, i64 0
+  %9 = load i32* %i1, align 4
+  %idxprom = sext i32 %9 to i64
+  %10 = load i32** %arr.addr, align 8
+  %arrayidx6 = getelementptr inbounds i32* %10, i64 %idxprom
+  call void @swap(i32* %arrayidx, i32* %arrayidx6)
+  %11 = load i32** %arr.addr, align 8
+  %12 = load i32* %i1, align 4
+  call void @heapify(i32* %11, i32 %12, i32 0)
+  br label %for.inc7
+
+for.inc7:                                         ; preds = %for.body5
+  %13 = load i32* %i1, align 4
+  %dec8 = add nsw i32 %13, -1
+  store i32 %dec8, i32* %i1, align 4
+  br label %for.cond3
+
+for.end9:                                         ; preds = %for.cond3
+  ret void
+}
+
+define void @printArray(i32* %arr, i32 %N) nounwind uwtable {
+entry:
+  %arr.addr = alloca i32*, align 8
+  %N.addr = alloca i32, align 4
+  %i = alloca i32, align 4
+  store i32* %arr, i32** %arr.addr, align 8
+  store i32 %N, i32* %N.addr, align 4
+  store i32 0, i32* %i, align 4
+  br label %for.cond
+
+for.cond:                                         ; preds = %for.inc, %entry
+  %0 = load i32* %i, align 4
+  %1 = load i32* %N.addr, align 4
+  %cmp = icmp slt i32 %0, %1
+  br i1 %cmp, label %for.body, label %for.end
+
+for.body:                                         ; preds = %for.cond
+  %2 = load i32* %i, align 4
+  %idxprom = sext i32 %2 to i64
+  %3 = load i32** %arr.addr, align 8
+  %arrayidx = getelementptr inbounds i32* %3, i64 %idxprom
+  %4 = load i32* %arrayidx, align 4
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i32 %4)
+  br label %for.inc
+
+for.inc:                                          ; preds = %for.body
+  %5 = load i32* %i, align 4
+  %inc = add nsw i32 %5, 1
+  store i32 %inc, i32* %i, align 4
+  br label %for.cond
+
+for.end:                                          ; preds = %for.cond
+  %call1 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([2 x i8]* @.str1, i32 0, i32 0))
+  ret void
+}
+
+declare i32 @printf(i8*, ...)
+
+define i32 @main() nounwind uwtable {
+entry:
+  %retval = alloca i32, align 4
+  %arr = alloca [6 x i32], align 16
+  %N = alloca i32, align 4
+  store i32 0, i32* %retval
+  %0 = bitcast [6 x i32]* %arr to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %0, i8* bitcast ([6 x i32]* @main.arr to i8*), i64 24, i32 16, i1 false)
+  store i32 6, i32* %N, align 4
+  %arraydecay = getelementptr inbounds [6 x i32]* %arr, i32 0, i32 0
+  %1 = load i32* %N, align 4
+  call void @heapSort(i32* %arraydecay, i32 %1)
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([17 x i8]* @.str2, i32 0, i32 0))
+  %arraydecay1 = getelementptr inbounds [6 x i32]* %arr, i32 0, i32 0
+  %2 = load i32* %N, align 4
+  call void @printArray(i32* %arraydecay1, i32 %2)
+  %3 = load i32* %retval
+  ret i32 %3
+}
+
+declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture, i64, i32, i1) nounwind
