@@ -1,0 +1,4 @@
+Back Edge: for.cond <--- for.inc
+Natural Loop: for.cond for.body for.inc 
+Back Edge: while.cond <--- if.end
+Natural Loop: while.cond land.rhs land.end while.body if.then if.end 

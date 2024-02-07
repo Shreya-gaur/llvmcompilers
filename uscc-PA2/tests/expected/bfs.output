@@ -1,0 +1,8 @@
+Back Edge: while.cond <--- while.end
+Natural Loop: while.cond while.body while.cond6 while.body8 if.then if.end while.end 
+Back Edge: while.cond6 <--- if.end
+Natural Loop: while.cond6 while.body8 if.then if.end 
+Back Edge: for.cond <--- for.inc
+Natural Loop: for.cond for.body for.inc 
+Back Edge: for.cond <--- for.inc
+Natural Loop: for.cond for.body for.inc 

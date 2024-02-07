@@ -1,0 +1,38 @@
+int main()
+{
+    int x = 1;
+    int y = 9;
+    int z = 10;
+    printf("start1!\n");
+    while (x < 10)
+    {
+        x = z + 4;
+        z = y + 3;
+        printf("y = %d\n", y);
+        ++x;
+    }
+    if (x < 20)
+    {
+        y = 100;
+        z = x + y;
+        printf("start2!\n");
+        y = z + 4;
+        z = y + 3;
+        printf("y = %d\n", y);
+        ++x;
+        while (x < 20)
+        {
+            y = z + 4;
+            z = y + 3;
+            printf("y = %d\n", y);
+            ++x;
+        }
+    }
+    else
+    {
+        y = 100;
+        z = x + y;
+        printf("start2!\n");
+    }
+    return 0;
+}

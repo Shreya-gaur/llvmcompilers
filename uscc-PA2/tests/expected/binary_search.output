@@ -1,0 +1,2 @@
+Back Edge: while.cond <--- if.end8
+Natural Loop: while.cond while.body if.end if.then5 if.end8 if.else 

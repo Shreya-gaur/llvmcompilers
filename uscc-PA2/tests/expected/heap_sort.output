@@ -1,0 +1,6 @@
+Back Edge: for.cond <--- for.inc
+Natural Loop: for.cond for.body for.inc 
+Back Edge: for.cond3 <--- for.inc7
+Natural Loop: for.cond3 for.body5 for.inc7 
+Back Edge: for.cond <--- for.inc
+Natural Loop: for.cond for.body for.inc 
