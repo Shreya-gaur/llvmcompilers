@@ -1,0 +1,36 @@
+Function 'bar':
+entry:
+0   %c.addr = alloca i32
+1   %b.addr = alloca i32
+2   %a.addr = alloca i32
+3   store i32 0, i32* %c.addr; DUMMY
+4   store i32 0, i32* %b.addr; DUMMY
+5   store i32 0, i32* %a.addr; DUMMY
+6   store i32 0, i32* %a.addr
+7   store i32 1, i32* %b.addr
+8   store i32 2, i32* %c.addr
+9   %b = load i32* %b.addr
+10   %a = load i32* %a.addr
+11   %gt = icmp sgt i32 %a, %b
+12   br i1 %gt, label %if.then, label %if.else
+
+if.then:
+13   store i32 2, i32* %a.addr
+14   store i32 1, i32* %b.addr
+15   store i32 1, i32* %c.addr
+16   br label %if.end
+
+if.end:
+17   %c = load i32* %c.addr
+18   %b1 = load i32* %b.addr
+19   %a2 = load i32* %a.addr
+20   %add = add i32 %a2, %b1
+21   %add3 = add i32 %add, %c
+22   ret i32 %add3
+
+if.else:
+23   store i32 3, i32* %c.addr
+24   br label %if.end
+
+Use of Uninitialized variables: {}
+

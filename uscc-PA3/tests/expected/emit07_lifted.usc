@@ -1,0 +1,18 @@
+int main()
+{
+    int x = 5;
+    printf("%d\n", !(x));
+    while (x > 0)
+    {
+        int y = 8;
+        printf("%d\n", x);
+        --x;
+        while (y < 10)
+        {
+            printf("%d\n", y);
+            ++y;
+        }
+    }
+    printf("%d\n", !(x));
+    return 0;
+}

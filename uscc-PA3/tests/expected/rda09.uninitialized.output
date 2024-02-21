@@ -1,0 +1,28 @@
+Function 'foo':
+entry:
+0   %q.addr = alloca i32
+1   %p.addr = alloca i32
+2   store i32 0, i32* %q.addr; DUMMY
+3   store i32 0, i32* %p.addr; DUMMY
+4   store i32 %p, i32* %p.addr
+5   %p1 = load i32* %p.addr
+6   store i32 %p1, i32* %q.addr
+7   br label %while.cond
+
+while.cond:
+8   %q = load i32* %q.addr
+9   %lt = icmp slt i32 %q, 10
+10   br i1 %lt, label %while.body, label %while.end
+
+while.body:
+11   %q2 = load i32* %q.addr
+12   %add = add i32 %q2, 1
+13   store i32 %add, i32* %q.addr
+14   br label %while.cond
+
+while.end:
+15   %q3 = load i32* %q.addr
+16   ret i32 %q3
+
+Use of Uninitialized variables: {}
+

@@ -1,0 +1,484 @@
+; ModuleID = 'bfs.c'
+target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64-S128"
+target triple = "x86_64-unknown-linux-gnu"
+
+%struct.Graph = type { i32, %struct.node**, i32* }
+%struct.node = type { i32, %struct.node* }
+%struct.queue = type { [40 x i32], i32, i32 }
+
+@.str = private unnamed_addr constant [12 x i8] c"Visited %d\0A\00", align 1
+@.str1 = private unnamed_addr constant [17 x i8] c"\0AQueue is Full!!\00", align 1
+@.str2 = private unnamed_addr constant [15 x i8] c"Queue is empty\00", align 1
+@.str3 = private unnamed_addr constant [17 x i8] c"Resetting queue \00", align 1
+@.str4 = private unnamed_addr constant [18 x i8] c"\0AQueue contains \0A\00", align 1
+@.str5 = private unnamed_addr constant [4 x i8] c"%d \00", align 1
+
+define void @bfs(%struct.Graph* %graph, i32 %startVertex) nounwind uwtable {
+entry:
+  %graph.addr = alloca %struct.Graph*, align 8
+  %startVertex.addr = alloca i32, align 4
+  %q = alloca %struct.queue*, align 8
+  %currentVertex = alloca i32, align 4
+  %temp = alloca %struct.node*, align 8
+  %adjVertex = alloca i32, align 4
+  store %struct.Graph* %graph, %struct.Graph** %graph.addr, align 8
+  store i32 %startVertex, i32* %startVertex.addr, align 4
+  %call = call %struct.queue* @createQueue()
+  store %struct.queue* %call, %struct.queue** %q, align 8
+  %0 = load i32* %startVertex.addr, align 4
+  %idxprom = sext i32 %0 to i64
+  %1 = load %struct.Graph** %graph.addr, align 8
+  %visited = getelementptr inbounds %struct.Graph* %1, i32 0, i32 2
+  %2 = load i32** %visited, align 8
+  %arrayidx = getelementptr inbounds i32* %2, i64 %idxprom
+  store i32 1, i32* %arrayidx, align 4
+  %3 = load %struct.queue** %q, align 8
+  %4 = load i32* %startVertex.addr, align 4
+  call void @enqueue(%struct.queue* %3, i32 %4)
+  br label %while.cond
+
+while.cond:                                       ; preds = %while.end, %entry
+  %5 = load %struct.queue** %q, align 8
+  %call1 = call i32 @isEmpty(%struct.queue* %5)
+  %tobool = icmp ne i32 %call1, 0
+  %lnot = xor i1 %tobool, true
+  br i1 %lnot, label %while.body, label %while.end15
+
+while.body:                                       ; preds = %while.cond
+  %6 = load %struct.queue** %q, align 8
+  call void @printQueue(%struct.queue* %6)
+  %7 = load %struct.queue** %q, align 8
+  %call2 = call i32 @dequeue(%struct.queue* %7)
+  store i32 %call2, i32* %currentVertex, align 4
+  %8 = load i32* %currentVertex, align 4
+  %call3 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([12 x i8]* @.str, i32 0, i32 0), i32 %8)
+  %9 = load i32* %currentVertex, align 4
+  %idxprom4 = sext i32 %9 to i64
+  %10 = load %struct.Graph** %graph.addr, align 8
+  %adjLists = getelementptr inbounds %struct.Graph* %10, i32 0, i32 1
+  %11 = load %struct.node*** %adjLists, align 8
+  %arrayidx5 = getelementptr inbounds %struct.node** %11, i64 %idxprom4
+  %12 = load %struct.node** %arrayidx5, align 8
+  store %struct.node* %12, %struct.node** %temp, align 8
+  br label %while.cond6
+
+while.cond6:                                      ; preds = %if.end, %while.body
+  %13 = load %struct.node** %temp, align 8
+  %tobool7 = icmp ne %struct.node* %13, null
+  br i1 %tobool7, label %while.body8, label %while.end
+
+while.body8:                                      ; preds = %while.cond6
+  %14 = load %struct.node** %temp, align 8
+  %vertex = getelementptr inbounds %struct.node* %14, i32 0, i32 0
+  %15 = load i32* %vertex, align 4
+  store i32 %15, i32* %adjVertex, align 4
+  %16 = load i32* %adjVertex, align 4
+  %idxprom9 = sext i32 %16 to i64
+  %17 = load %struct.Graph** %graph.addr, align 8
+  %visited10 = getelementptr inbounds %struct.Graph* %17, i32 0, i32 2
+  %18 = load i32** %visited10, align 8
+  %arrayidx11 = getelementptr inbounds i32* %18, i64 %idxprom9
+  %19 = load i32* %arrayidx11, align 4
+  %cmp = icmp eq i32 %19, 0
+  br i1 %cmp, label %if.then, label %if.end
+
+if.then:                                          ; preds = %while.body8
+  %20 = load i32* %adjVertex, align 4
+  %idxprom12 = sext i32 %20 to i64
+  %21 = load %struct.Graph** %graph.addr, align 8
+  %visited13 = getelementptr inbounds %struct.Graph* %21, i32 0, i32 2
+  %22 = load i32** %visited13, align 8
+  %arrayidx14 = getelementptr inbounds i32* %22, i64 %idxprom12
+  store i32 1, i32* %arrayidx14, align 4
+  %23 = load %struct.queue** %q, align 8
+  %24 = load i32* %adjVertex, align 4
+  call void @enqueue(%struct.queue* %23, i32 %24)
+  br label %if.end
+
+if.end:                                           ; preds = %if.then, %while.body8
+  %25 = load %struct.node** %temp, align 8
+  %next = getelementptr inbounds %struct.node* %25, i32 0, i32 1
+  %26 = load %struct.node** %next, align 8
+  store %struct.node* %26, %struct.node** %temp, align 8
+  br label %while.cond6
+
+while.end:                                        ; preds = %while.cond6
+  br label %while.cond
+
+while.end15:                                      ; preds = %while.cond
+  ret void
+}
+
+define void @enqueue(%struct.queue* %q, i32 %value) nounwind uwtable {
+entry:
+  %q.addr = alloca %struct.queue*, align 8
+  %value.addr = alloca i32, align 4
+  store %struct.queue* %q, %struct.queue** %q.addr, align 8
+  store i32 %value, i32* %value.addr, align 4
+  %0 = load %struct.queue** %q.addr, align 8
+  %rear = getelementptr inbounds %struct.queue* %0, i32 0, i32 2
+  %1 = load i32* %rear, align 4
+  %cmp = icmp eq i32 %1, 39
+  br i1 %cmp, label %if.then, label %if.else
+
+if.then:                                          ; preds = %entry
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([17 x i8]* @.str1, i32 0, i32 0))
+  br label %if.end6
+
+if.else:                                          ; preds = %entry
+  %2 = load %struct.queue** %q.addr, align 8
+  %front = getelementptr inbounds %struct.queue* %2, i32 0, i32 1
+  %3 = load i32* %front, align 4
+  %cmp1 = icmp eq i32 %3, -1
+  br i1 %cmp1, label %if.then2, label %if.end
+
+if.then2:                                         ; preds = %if.else
+  %4 = load %struct.queue** %q.addr, align 8
+  %front3 = getelementptr inbounds %struct.queue* %4, i32 0, i32 1
+  store i32 0, i32* %front3, align 4
+  br label %if.end
+
+if.end:                                           ; preds = %if.then2, %if.else
+  %5 = load %struct.queue** %q.addr, align 8
+  %rear4 = getelementptr inbounds %struct.queue* %5, i32 0, i32 2
+  %6 = load i32* %rear4, align 4
+  %inc = add nsw i32 %6, 1
+  store i32 %inc, i32* %rear4, align 4
+  %7 = load i32* %value.addr, align 4
+  %8 = load %struct.queue** %q.addr, align 8
+  %rear5 = getelementptr inbounds %struct.queue* %8, i32 0, i32 2
+  %9 = load i32* %rear5, align 4
+  %idxprom = sext i32 %9 to i64
+  %10 = load %struct.queue** %q.addr, align 8
+  %items = getelementptr inbounds %struct.queue* %10, i32 0, i32 0
+  %arrayidx = getelementptr inbounds [40 x i32]* %items, i32 0, i64 %idxprom
+  store i32 %7, i32* %arrayidx, align 4
+  br label %if.end6
+
+if.end6:                                          ; preds = %if.end, %if.then
+  ret void
+}
+
+define i32 @isEmpty(%struct.queue* %q) nounwind uwtable {
+entry:
+  %retval = alloca i32, align 4
+  %q.addr = alloca %struct.queue*, align 8
+  store %struct.queue* %q, %struct.queue** %q.addr, align 8
+  %0 = load %struct.queue** %q.addr, align 8
+  %rear = getelementptr inbounds %struct.queue* %0, i32 0, i32 2
+  %1 = load i32* %rear, align 4
+  %cmp = icmp eq i32 %1, -1
+  br i1 %cmp, label %if.then, label %if.else
+
+if.then:                                          ; preds = %entry
+  store i32 1, i32* %retval
+  br label %return
+
+if.else:                                          ; preds = %entry
+  store i32 0, i32* %retval
+  br label %return
+
+return:                                           ; preds = %if.else, %if.then
+  %2 = load i32* %retval
+  ret i32 %2
+}
+
+define void @printQueue(%struct.queue* %q) nounwind uwtable {
+entry:
+  %q.addr = alloca %struct.queue*, align 8
+  %i = alloca i32, align 4
+  store %struct.queue* %q, %struct.queue** %q.addr, align 8
+  %0 = load %struct.queue** %q.addr, align 8
+  %front = getelementptr inbounds %struct.queue* %0, i32 0, i32 1
+  %1 = load i32* %front, align 4
+  store i32 %1, i32* %i, align 4
+  %2 = load %struct.queue** %q.addr, align 8
+  %call = call i32 @isEmpty(%struct.queue* %2)
+  %tobool = icmp ne i32 %call, 0
+  br i1 %tobool, label %if.then, label %if.else
+
+if.then:                                          ; preds = %entry
+  %call1 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([15 x i8]* @.str2, i32 0, i32 0))
+  br label %if.end
+
+if.else:                                          ; preds = %entry
+  %call2 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([18 x i8]* @.str4, i32 0, i32 0))
+  %3 = load %struct.queue** %q.addr, align 8
+  %front3 = getelementptr inbounds %struct.queue* %3, i32 0, i32 1
+  %4 = load i32* %front3, align 4
+  store i32 %4, i32* %i, align 4
+  br label %for.cond
+
+for.cond:                                         ; preds = %for.inc, %if.else
+  %5 = load i32* %i, align 4
+  %6 = load %struct.queue** %q.addr, align 8
+  %rear = getelementptr inbounds %struct.queue* %6, i32 0, i32 2
+  %7 = load i32* %rear, align 4
+  %add = add nsw i32 %7, 1
+  %cmp = icmp slt i32 %5, %add
+  br i1 %cmp, label %for.body, label %for.end
+
+for.body:                                         ; preds = %for.cond
+  %8 = load i32* %i, align 4
+  %idxprom = sext i32 %8 to i64
+  %9 = load %struct.queue** %q.addr, align 8
+  %items = getelementptr inbounds %struct.queue* %9, i32 0, i32 0
+  %arrayidx = getelementptr inbounds [40 x i32]* %items, i32 0, i64 %idxprom
+  %10 = load i32* %arrayidx, align 4
+  %call4 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str5, i32 0, i32 0), i32 %10)
+  br label %for.inc
+
+for.inc:                                          ; preds = %for.body
+  %11 = load i32* %i, align 4
+  %inc = add nsw i32 %11, 1
+  store i32 %inc, i32* %i, align 4
+  br label %for.cond
+
+for.end:                                          ; preds = %for.cond
+  br label %if.end
+
+if.end:                                           ; preds = %for.end, %if.then
+  ret void
+}
+
+define i32 @dequeue(%struct.queue* %q) nounwind uwtable {
+entry:
+  %q.addr = alloca %struct.queue*, align 8
+  %item = alloca i32, align 4
+  store %struct.queue* %q, %struct.queue** %q.addr, align 8
+  %0 = load %struct.queue** %q.addr, align 8
+  %call = call i32 @isEmpty(%struct.queue* %0)
+  %tobool = icmp ne i32 %call, 0
+  br i1 %tobool, label %if.then, label %if.else
+
+if.then:                                          ; preds = %entry
+  %call1 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([15 x i8]* @.str2, i32 0, i32 0))
+  store i32 -1, i32* %item, align 4
+  br label %if.end8
+
+if.else:                                          ; preds = %entry
+  %1 = load %struct.queue** %q.addr, align 8
+  %front = getelementptr inbounds %struct.queue* %1, i32 0, i32 1
+  %2 = load i32* %front, align 4
+  %idxprom = sext i32 %2 to i64
+  %3 = load %struct.queue** %q.addr, align 8
+  %items = getelementptr inbounds %struct.queue* %3, i32 0, i32 0
+  %arrayidx = getelementptr inbounds [40 x i32]* %items, i32 0, i64 %idxprom
+  %4 = load i32* %arrayidx, align 4
+  store i32 %4, i32* %item, align 4
+  %5 = load %struct.queue** %q.addr, align 8
+  %front2 = getelementptr inbounds %struct.queue* %5, i32 0, i32 1
+  %6 = load i32* %front2, align 4
+  %inc = add nsw i32 %6, 1
+  store i32 %inc, i32* %front2, align 4
+  %7 = load %struct.queue** %q.addr, align 8
+  %front3 = getelementptr inbounds %struct.queue* %7, i32 0, i32 1
+  %8 = load i32* %front3, align 4
+  %9 = load %struct.queue** %q.addr, align 8
+  %rear = getelementptr inbounds %struct.queue* %9, i32 0, i32 2
+  %10 = load i32* %rear, align 4
+  %cmp = icmp sgt i32 %8, %10
+  br i1 %cmp, label %if.then4, label %if.end
+
+if.then4:                                         ; preds = %if.else
+  %call5 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([17 x i8]* @.str3, i32 0, i32 0))
+  %11 = load %struct.queue** %q.addr, align 8
+  %rear6 = getelementptr inbounds %struct.queue* %11, i32 0, i32 2
+  store i32 -1, i32* %rear6, align 4
+  %12 = load %struct.queue** %q.addr, align 8
+  %front7 = getelementptr inbounds %struct.queue* %12, i32 0, i32 1
+  store i32 -1, i32* %front7, align 4
+  br label %if.end
+
+if.end:                                           ; preds = %if.then4, %if.else
+  br label %if.end8
+
+if.end8:                                          ; preds = %if.end, %if.then
+  %13 = load i32* %item, align 4
+  ret i32 %13
+}
+
+declare i32 @printf(i8*, ...)
+
+define %struct.node* @createNode(i32 %v) nounwind uwtable {
+entry:
+  %v.addr = alloca i32, align 4
+  %newNode = alloca %struct.node*, align 8
+  store i32 %v, i32* %v.addr, align 4
+  %call = call noalias i8* @malloc(i64 16) nounwind
+  %0 = bitcast i8* %call to %struct.node*
+  store %struct.node* %0, %struct.node** %newNode, align 8
+  %1 = load i32* %v.addr, align 4
+  %2 = load %struct.node** %newNode, align 8
+  %vertex = getelementptr inbounds %struct.node* %2, i32 0, i32 0
+  store i32 %1, i32* %vertex, align 4
+  %3 = load %struct.node** %newNode, align 8
+  %next = getelementptr inbounds %struct.node* %3, i32 0, i32 1
+  store %struct.node* null, %struct.node** %next, align 8
+  %4 = load %struct.node** %newNode, align 8
+  ret %struct.node* %4
+}
+
+declare noalias i8* @malloc(i64) nounwind
+
+define %struct.Graph* @createGraph(i32 %vertices) nounwind uwtable {
+entry:
+  %vertices.addr = alloca i32, align 4
+  %graph = alloca %struct.Graph*, align 8
+  %i = alloca i32, align 4
+  store i32 %vertices, i32* %vertices.addr, align 4
+  %call = call noalias i8* @malloc(i64 24) nounwind
+  %0 = bitcast i8* %call to %struct.Graph*
+  store %struct.Graph* %0, %struct.Graph** %graph, align 8
+  %1 = load i32* %vertices.addr, align 4
+  %2 = load %struct.Graph** %graph, align 8
+  %numVertices = getelementptr inbounds %struct.Graph* %2, i32 0, i32 0
+  store i32 %1, i32* %numVertices, align 4
+  %3 = load i32* %vertices.addr, align 4
+  %conv = sext i32 %3 to i64
+  %mul = mul i64 %conv, 8
+  %call1 = call noalias i8* @malloc(i64 %mul) nounwind
+  %4 = bitcast i8* %call1 to %struct.node**
+  %5 = load %struct.Graph** %graph, align 8
+  %adjLists = getelementptr inbounds %struct.Graph* %5, i32 0, i32 1
+  store %struct.node** %4, %struct.node*** %adjLists, align 8
+  %6 = load i32* %vertices.addr, align 4
+  %conv2 = sext i32 %6 to i64
+  %mul3 = mul i64 %conv2, 4
+  %call4 = call noalias i8* @malloc(i64 %mul3) nounwind
+  %7 = bitcast i8* %call4 to i32*
+  %8 = load %struct.Graph** %graph, align 8
+  %visited = getelementptr inbounds %struct.Graph* %8, i32 0, i32 2
+  store i32* %7, i32** %visited, align 8
+  store i32 0, i32* %i, align 4
+  br label %for.cond
+
+for.cond:                                         ; preds = %for.inc, %entry
+  %9 = load i32* %i, align 4
+  %10 = load i32* %vertices.addr, align 4
+  %cmp = icmp slt i32 %9, %10
+  br i1 %cmp, label %for.body, label %for.end
+
+for.body:                                         ; preds = %for.cond
+  %11 = load i32* %i, align 4
+  %idxprom = sext i32 %11 to i64
+  %12 = load %struct.Graph** %graph, align 8
+  %adjLists6 = getelementptr inbounds %struct.Graph* %12, i32 0, i32 1
+  %13 = load %struct.node*** %adjLists6, align 8
+  %arrayidx = getelementptr inbounds %struct.node** %13, i64 %idxprom
+  store %struct.node* null, %struct.node** %arrayidx, align 8
+  %14 = load i32* %i, align 4
+  %idxprom7 = sext i32 %14 to i64
+  %15 = load %struct.Graph** %graph, align 8
+  %visited8 = getelementptr inbounds %struct.Graph* %15, i32 0, i32 2
+  %16 = load i32** %visited8, align 8
+  %arrayidx9 = getelementptr inbounds i32* %16, i64 %idxprom7
+  store i32 0, i32* %arrayidx9, align 4
+  br label %for.inc
+
+for.inc:                                          ; preds = %for.body
+  %17 = load i32* %i, align 4
+  %inc = add nsw i32 %17, 1
+  store i32 %inc, i32* %i, align 4
+  br label %for.cond
+
+for.end:                                          ; preds = %for.cond
+  %18 = load %struct.Graph** %graph, align 8
+  ret %struct.Graph* %18
+}
+
+define void @addEdge(%struct.Graph* %graph, i32 %src, i32 %dest) nounwind uwtable {
+entry:
+  %graph.addr = alloca %struct.Graph*, align 8
+  %src.addr = alloca i32, align 4
+  %dest.addr = alloca i32, align 4
+  %newNode = alloca %struct.node*, align 8
+  store %struct.Graph* %graph, %struct.Graph** %graph.addr, align 8
+  store i32 %src, i32* %src.addr, align 4
+  store i32 %dest, i32* %dest.addr, align 4
+  %0 = load i32* %dest.addr, align 4
+  %call = call %struct.node* @createNode(i32 %0)
+  store %struct.node* %call, %struct.node** %newNode, align 8
+  %1 = load i32* %src.addr, align 4
+  %idxprom = sext i32 %1 to i64
+  %2 = load %struct.Graph** %graph.addr, align 8
+  %adjLists = getelementptr inbounds %struct.Graph* %2, i32 0, i32 1
+  %3 = load %struct.node*** %adjLists, align 8
+  %arrayidx = getelementptr inbounds %struct.node** %3, i64 %idxprom
+  %4 = load %struct.node** %arrayidx, align 8
+  %5 = load %struct.node** %newNode, align 8
+  %next = getelementptr inbounds %struct.node* %5, i32 0, i32 1
+  store %struct.node* %4, %struct.node** %next, align 8
+  %6 = load %struct.node** %newNode, align 8
+  %7 = load i32* %src.addr, align 4
+  %idxprom1 = sext i32 %7 to i64
+  %8 = load %struct.Graph** %graph.addr, align 8
+  %adjLists2 = getelementptr inbounds %struct.Graph* %8, i32 0, i32 1
+  %9 = load %struct.node*** %adjLists2, align 8
+  %arrayidx3 = getelementptr inbounds %struct.node** %9, i64 %idxprom1
+  store %struct.node* %6, %struct.node** %arrayidx3, align 8
+  %10 = load i32* %src.addr, align 4
+  %call4 = call %struct.node* @createNode(i32 %10)
+  store %struct.node* %call4, %struct.node** %newNode, align 8
+  %11 = load i32* %dest.addr, align 4
+  %idxprom5 = sext i32 %11 to i64
+  %12 = load %struct.Graph** %graph.addr, align 8
+  %adjLists6 = getelementptr inbounds %struct.Graph* %12, i32 0, i32 1
+  %13 = load %struct.node*** %adjLists6, align 8
+  %arrayidx7 = getelementptr inbounds %struct.node** %13, i64 %idxprom5
+  %14 = load %struct.node** %arrayidx7, align 8
+  %15 = load %struct.node** %newNode, align 8
+  %next8 = getelementptr inbounds %struct.node* %15, i32 0, i32 1
+  store %struct.node* %14, %struct.node** %next8, align 8
+  %16 = load %struct.node** %newNode, align 8
+  %17 = load i32* %dest.addr, align 4
+  %idxprom9 = sext i32 %17 to i64
+  %18 = load %struct.Graph** %graph.addr, align 8
+  %adjLists10 = getelementptr inbounds %struct.Graph* %18, i32 0, i32 1
+  %19 = load %struct.node*** %adjLists10, align 8
+  %arrayidx11 = getelementptr inbounds %struct.node** %19, i64 %idxprom9
+  store %struct.node* %16, %struct.node** %arrayidx11, align 8
+  ret void
+}
+
+define %struct.queue* @createQueue() nounwind uwtable {
+entry:
+  %q = alloca %struct.queue*, align 8
+  %call = call noalias i8* @malloc(i64 168) nounwind
+  %0 = bitcast i8* %call to %struct.queue*
+  store %struct.queue* %0, %struct.queue** %q, align 8
+  %1 = load %struct.queue** %q, align 8
+  %front = getelementptr inbounds %struct.queue* %1, i32 0, i32 1
+  store i32 -1, i32* %front, align 4
+  %2 = load %struct.queue** %q, align 8
+  %rear = getelementptr inbounds %struct.queue* %2, i32 0, i32 2
+  store i32 -1, i32* %rear, align 4
+  %3 = load %struct.queue** %q, align 8
+  ret %struct.queue* %3
+}
+
+define i32 @main() nounwind uwtable {
+entry:
+  %retval = alloca i32, align 4
+  %graph = alloca %struct.Graph*, align 8
+  store i32 0, i32* %retval
+  %call = call %struct.Graph* @createGraph(i32 6)
+  store %struct.Graph* %call, %struct.Graph** %graph, align 8
+  %0 = load %struct.Graph** %graph, align 8
+  call void @addEdge(%struct.Graph* %0, i32 0, i32 1)
+  %1 = load %struct.Graph** %graph, align 8
+  call void @addEdge(%struct.Graph* %1, i32 0, i32 2)
+  %2 = load %struct.Graph** %graph, align 8
+  call void @addEdge(%struct.Graph* %2, i32 1, i32 2)
+  %3 = load %struct.Graph** %graph, align 8
+  call void @addEdge(%struct.Graph* %3, i32 1, i32 4)
+  %4 = load %struct.Graph** %graph, align 8
+  call void @addEdge(%struct.Graph* %4, i32 1, i32 3)
+  %5 = load %struct.Graph** %graph, align 8
+  call void @addEdge(%struct.Graph* %5, i32 2, i32 4)
+  %6 = load %struct.Graph** %graph, align 8
+  call void @addEdge(%struct.Graph* %6, i32 3, i32 4)
+  %7 = load %struct.Graph** %graph, align 8
+  call void @bfs(%struct.Graph* %7, i32 0)
+  ret i32 0
+}

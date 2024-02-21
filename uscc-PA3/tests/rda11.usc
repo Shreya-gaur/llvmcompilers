@@ -1,0 +1,18 @@
+// rda11.usc
+// Jianping Zeng (zeng207@purdue.edu)
+// Test for reaching definition and used-before-definition variables.
+//---------------------------------------------------------
+
+void count()
+{
+    int k;
+    int i;
+    i = 0;
+    while (i < 10)
+    {
+        k = k + 1;
+        i = i + 1;
+    }
+    
+    printf("%d", k);
+}

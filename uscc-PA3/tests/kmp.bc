@@ -1,0 +1,265 @@
+; ModuleID = 'kmp.c'
+target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64-S128"
+target triple = "x86_64-unknown-linux-gnu"
+
+@.str = private unnamed_addr constant [27 x i8] c"Found pattern at index %d \00", align 1
+@main.txt = private unnamed_addr constant [20 x i8] c"ABABDABACDABABCABAB\00", align 16
+@main.pat = private unnamed_addr constant [10 x i8] c"ABABCABAB\00", align 1
+
+define void @KMPSearch(i8* %pat, i8* %txt) nounwind uwtable {
+entry:
+  %pat.addr = alloca i8*, align 8
+  %txt.addr = alloca i8*, align 8
+  %M = alloca i32, align 4
+  %N = alloca i32, align 4
+  %saved_stack = alloca i8*
+  %i = alloca i32, align 4
+  %j = alloca i32, align 4
+  store i8* %pat, i8** %pat.addr, align 8
+  store i8* %txt, i8** %txt.addr, align 8
+  %0 = load i8** %pat.addr, align 8
+  %call = call i64 @strlen(i8* %0)
+  %conv = trunc i64 %call to i32
+  store i32 %conv, i32* %M, align 4
+  %1 = load i8** %txt.addr, align 8
+  %call1 = call i64 @strlen(i8* %1)
+  %conv2 = trunc i64 %call1 to i32
+  store i32 %conv2, i32* %N, align 4
+  %2 = load i32* %M, align 4
+  %3 = zext i32 %2 to i64
+  %4 = call i8* @llvm.stacksave()
+  store i8* %4, i8** %saved_stack
+  %vla = alloca i32, i64 %3, align 16
+  %5 = load i8** %pat.addr, align 8
+  %6 = load i32* %M, align 4
+  call void @computeLPSArray(i8* %5, i32 %6, i32* %vla)
+  store i32 0, i32* %i, align 4
+  store i32 0, i32* %j, align 4
+  br label %while.cond
+
+while.cond:                                       ; preds = %if.end40, %entry
+  %7 = load i32* %N, align 4
+  %8 = load i32* %i, align 4
+  %sub = sub nsw i32 %7, %8
+  %9 = load i32* %M, align 4
+  %10 = load i32* %j, align 4
+  %sub3 = sub nsw i32 %9, %10
+  %cmp = icmp sge i32 %sub, %sub3
+  br i1 %cmp, label %while.body, label %while.end
+
+while.body:                                       ; preds = %while.cond
+  %11 = load i32* %j, align 4
+  %idxprom = sext i32 %11 to i64
+  %12 = load i8** %pat.addr, align 8
+  %arrayidx = getelementptr inbounds i8* %12, i64 %idxprom
+  %13 = load i8* %arrayidx, align 1
+  %conv5 = sext i8 %13 to i32
+  %14 = load i32* %i, align 4
+  %idxprom6 = sext i32 %14 to i64
+  %15 = load i8** %txt.addr, align 8
+  %arrayidx7 = getelementptr inbounds i8* %15, i64 %idxprom6
+  %16 = load i8* %arrayidx7, align 1
+  %conv8 = sext i8 %16 to i32
+  %cmp9 = icmp eq i32 %conv5, %conv8
+  br i1 %cmp9, label %if.then, label %if.end
+
+if.then:                                          ; preds = %while.body
+  %17 = load i32* %j, align 4
+  %inc = add nsw i32 %17, 1
+  store i32 %inc, i32* %j, align 4
+  %18 = load i32* %i, align 4
+  %inc11 = add nsw i32 %18, 1
+  store i32 %inc11, i32* %i, align 4
+  br label %if.end
+
+if.end:                                           ; preds = %if.then, %while.body
+  %19 = load i32* %j, align 4
+  %20 = load i32* %M, align 4
+  %cmp12 = icmp eq i32 %19, %20
+  br i1 %cmp12, label %if.then14, label %if.else
+
+if.then14:                                        ; preds = %if.end
+  %21 = load i32* %i, align 4
+  %22 = load i32* %j, align 4
+  %sub15 = sub nsw i32 %21, %22
+  %call16 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([27 x i8]* @.str, i32 0, i32 0), i32 %sub15)
+  %23 = load i32* %j, align 4
+  %sub17 = sub nsw i32 %23, 1
+  %idxprom18 = sext i32 %sub17 to i64
+  %arrayidx19 = getelementptr inbounds i32* %vla, i64 %idxprom18
+  %24 = load i32* %arrayidx19, align 4
+  store i32 %24, i32* %j, align 4
+  br label %if.end40
+
+if.else:                                          ; preds = %if.end
+  %25 = load i32* %i, align 4
+  %26 = load i32* %N, align 4
+  %cmp20 = icmp slt i32 %25, %26
+  br i1 %cmp20, label %land.lhs.true, label %if.end39
+
+land.lhs.true:                                    ; preds = %if.else
+  %27 = load i32* %j, align 4
+  %idxprom22 = sext i32 %27 to i64
+  %28 = load i8** %pat.addr, align 8
+  %arrayidx23 = getelementptr inbounds i8* %28, i64 %idxprom22
+  %29 = load i8* %arrayidx23, align 1
+  %conv24 = sext i8 %29 to i32
+  %30 = load i32* %i, align 4
+  %idxprom25 = sext i32 %30 to i64
+  %31 = load i8** %txt.addr, align 8
+  %arrayidx26 = getelementptr inbounds i8* %31, i64 %idxprom25
+  %32 = load i8* %arrayidx26, align 1
+  %conv27 = sext i8 %32 to i32
+  %cmp28 = icmp ne i32 %conv24, %conv27
+  br i1 %cmp28, label %if.then30, label %if.end39
+
+if.then30:                                        ; preds = %land.lhs.true
+  %33 = load i32* %j, align 4
+  %cmp31 = icmp ne i32 %33, 0
+  br i1 %cmp31, label %if.then33, label %if.else37
+
+if.then33:                                        ; preds = %if.then30
+  %34 = load i32* %j, align 4
+  %sub34 = sub nsw i32 %34, 1
+  %idxprom35 = sext i32 %sub34 to i64
+  %arrayidx36 = getelementptr inbounds i32* %vla, i64 %idxprom35
+  %35 = load i32* %arrayidx36, align 4
+  store i32 %35, i32* %j, align 4
+  br label %if.end38
+
+if.else37:                                        ; preds = %if.then30
+  %36 = load i32* %i, align 4
+  %add = add nsw i32 %36, 1
+  store i32 %add, i32* %i, align 4
+  br label %if.end38
+
+if.end38:                                         ; preds = %if.else37, %if.then33
+  br label %if.end39
+
+if.end39:                                         ; preds = %if.end38, %land.lhs.true, %if.else
+  br label %if.end40
+
+if.end40:                                         ; preds = %if.end39, %if.then14
+  br label %while.cond
+
+while.end:                                        ; preds = %while.cond
+  %37 = load i8** %saved_stack
+  call void @llvm.stackrestore(i8* %37)
+  ret void
+}
+
+declare i64 @strlen(i8*)
+
+declare i8* @llvm.stacksave() nounwind
+
+define void @computeLPSArray(i8* %pat, i32 %M, i32* %lps) nounwind uwtable {
+entry:
+  %pat.addr = alloca i8*, align 8
+  %M.addr = alloca i32, align 4
+  %lps.addr = alloca i32*, align 8
+  %len = alloca i32, align 4
+  %i = alloca i32, align 4
+  store i8* %pat, i8** %pat.addr, align 8
+  store i32 %M, i32* %M.addr, align 4
+  store i32* %lps, i32** %lps.addr, align 8
+  store i32 0, i32* %len, align 4
+  %0 = load i32** %lps.addr, align 8
+  %arrayidx = getelementptr inbounds i32* %0, i64 0
+  store i32 0, i32* %arrayidx, align 4
+  store i32 1, i32* %i, align 4
+  br label %while.cond
+
+while.cond:                                       ; preds = %if.end19, %entry
+  %1 = load i32* %i, align 4
+  %2 = load i32* %M.addr, align 4
+  %cmp = icmp slt i32 %1, %2
+  br i1 %cmp, label %while.body, label %while.end
+
+while.body:                                       ; preds = %while.cond
+  %3 = load i32* %i, align 4
+  %idxprom = sext i32 %3 to i64
+  %4 = load i8** %pat.addr, align 8
+  %arrayidx1 = getelementptr inbounds i8* %4, i64 %idxprom
+  %5 = load i8* %arrayidx1, align 1
+  %conv = sext i8 %5 to i32
+  %6 = load i32* %len, align 4
+  %idxprom2 = sext i32 %6 to i64
+  %7 = load i8** %pat.addr, align 8
+  %arrayidx3 = getelementptr inbounds i8* %7, i64 %idxprom2
+  %8 = load i8* %arrayidx3, align 1
+  %conv4 = sext i8 %8 to i32
+  %cmp5 = icmp eq i32 %conv, %conv4
+  br i1 %cmp5, label %if.then, label %if.else
+
+if.then:                                          ; preds = %while.body
+  %9 = load i32* %len, align 4
+  %inc = add nsw i32 %9, 1
+  store i32 %inc, i32* %len, align 4
+  %10 = load i32* %len, align 4
+  %11 = load i32* %i, align 4
+  %idxprom7 = sext i32 %11 to i64
+  %12 = load i32** %lps.addr, align 8
+  %arrayidx8 = getelementptr inbounds i32* %12, i64 %idxprom7
+  store i32 %10, i32* %arrayidx8, align 4
+  %13 = load i32* %i, align 4
+  %inc9 = add nsw i32 %13, 1
+  store i32 %inc9, i32* %i, align 4
+  br label %if.end19
+
+if.else:                                          ; preds = %while.body
+  %14 = load i32* %len, align 4
+  %cmp10 = icmp ne i32 %14, 0
+  br i1 %cmp10, label %if.then12, label %if.else15
+
+if.then12:                                        ; preds = %if.else
+  %15 = load i32* %len, align 4
+  %sub = sub nsw i32 %15, 1
+  %idxprom13 = sext i32 %sub to i64
+  %16 = load i32** %lps.addr, align 8
+  %arrayidx14 = getelementptr inbounds i32* %16, i64 %idxprom13
+  %17 = load i32* %arrayidx14, align 4
+  store i32 %17, i32* %len, align 4
+  br label %if.end
+
+if.else15:                                        ; preds = %if.else
+  %18 = load i32* %i, align 4
+  %idxprom16 = sext i32 %18 to i64
+  %19 = load i32** %lps.addr, align 8
+  %arrayidx17 = getelementptr inbounds i32* %19, i64 %idxprom16
+  store i32 0, i32* %arrayidx17, align 4
+  %20 = load i32* %i, align 4
+  %inc18 = add nsw i32 %20, 1
+  store i32 %inc18, i32* %i, align 4
+  br label %if.end
+
+if.end:                                           ; preds = %if.else15, %if.then12
+  br label %if.end19
+
+if.end19:                                         ; preds = %if.end, %if.then
+  br label %while.cond
+
+while.end:                                        ; preds = %while.cond
+  ret void
+}
+
+declare i32 @printf(i8*, ...)
+
+declare void @llvm.stackrestore(i8*) nounwind
+
+define i32 @main() nounwind uwtable {
+entry:
+  %retval = alloca i32, align 4
+  %txt = alloca [20 x i8], align 16
+  %pat = alloca [10 x i8], align 1
+  store i32 0, i32* %retval
+  %0 = bitcast [20 x i8]* %txt to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %0, i8* getelementptr inbounds ([20 x i8]* @main.txt, i32 0, i32 0), i64 20, i32 16, i1 false)
+  %1 = bitcast [10 x i8]* %pat to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %1, i8* getelementptr inbounds ([10 x i8]* @main.pat, i32 0, i32 0), i64 10, i32 1, i1 false)
+  %arraydecay = getelementptr inbounds [10 x i8]* %pat, i32 0, i32 0
+  %arraydecay1 = getelementptr inbounds [20 x i8]* %txt, i32 0, i32 0
+  call void @KMPSearch(i8* %arraydecay, i8* %arraydecay1)
+  ret i32 0
+}
+
+declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture, i64, i32, i1) nounwind

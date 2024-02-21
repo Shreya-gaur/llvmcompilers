@@ -1,0 +1,12 @@
+// rda02.usc
+// Jianping Zeng (zeng207@purdue.edu)
+// Test for reaching definition and used-before-definition variables.
+//---------------------------------------------------------
+
+int bar(int x) { return x; }
+
+void foo(int x) {
+	int y;
+    x = bar(y);
+}
+

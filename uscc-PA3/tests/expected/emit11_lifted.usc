@@ -1,0 +1,19 @@
+int main()
+{
+    int x = 1;
+    int y = 5;
+    while (x && y)
+    {
+        printf("%d\n", y);
+        --y;
+        if (y == 1)
+        {
+            x = 0;
+        }
+        else
+        {
+            printf("y != 1\n");
+        }
+    }
+    return 0;
+}

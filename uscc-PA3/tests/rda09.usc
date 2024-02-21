@@ -1,0 +1,13 @@
+// rda09.usc
+// Jianping Zeng (zeng207@purdue.edu)
+// Test for reaching definition and used-before-definition variables.
+//---------------------------------------------------------
+
+int foo(int p) {
+    int q;
+    q = p;
+    while (q < 10) {
+        q = q + 1;
+    }
+    return q;
+}

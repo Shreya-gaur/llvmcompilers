@@ -1,0 +1,5 @@
+digraph "CFG for 'main' function" {
+	label="CFG for 'main' function";
+
+	Node0x2c176b0 [shape=record,label="{entry:\l  %retval = alloca i32, align 4\l  %letters = alloca [36 x i8], align 16\l  store i32 0, i32* %retval\l  %0 = bitcast [36 x i8]* %letters to i8*\l  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %0, i8* getelementptr inbounds ([36\l... x i8]* @main.letters, i32 0, i32 0), i64 36, i32 16, i1 false)\l  %arraydecay = getelementptr inbounds [36 x i8]* %letters, i32 0, i32 0\l  call void @quicksort(i8* %arraydecay, i32 0, i32 34)\l  %arraydecay1 = getelementptr inbounds [36 x i8]* %letters, i32 0, i32 0\l  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]*\l... @.str, i32 0, i32 0), i8* %arraydecay1)\l  ret i32 0\l}"];
+}

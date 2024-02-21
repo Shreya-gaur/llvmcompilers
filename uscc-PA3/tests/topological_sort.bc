@@ -1,0 +1,360 @@
+; ModuleID = 'topological_sort.c'
+target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64-S128"
+target triple = "x86_64-unknown-linux-gnu"
+
+%struct.Stack = type { i32, %struct.Stack* }
+%struct.List = type { i32, %struct.List* }
+%struct.Graph = type { i32, %struct.List* }
+
+@.str = private unnamed_addr constant [4 x i8] c"%d \00", align 1
+@.str1 = private unnamed_addr constant [28 x i8] c"Topological Sorting Order: \00", align 1
+
+define %struct.Stack* @createStackNode(i32 %data) nounwind uwtable {
+entry:
+  %data.addr = alloca i32, align 4
+  %newNode = alloca %struct.Stack*, align 8
+  store i32 %data, i32* %data.addr, align 4
+  %call = call noalias i8* @malloc(i64 16) nounwind
+  %0 = bitcast i8* %call to %struct.Stack*
+  store %struct.Stack* %0, %struct.Stack** %newNode, align 8
+  %1 = load i32* %data.addr, align 4
+  %2 = load %struct.Stack** %newNode, align 8
+  %data1 = getelementptr inbounds %struct.Stack* %2, i32 0, i32 0
+  store i32 %1, i32* %data1, align 4
+  %3 = load %struct.Stack** %newNode, align 8
+  %next = getelementptr inbounds %struct.Stack* %3, i32 0, i32 1
+  store %struct.Stack* null, %struct.Stack** %next, align 8
+  %4 = load %struct.Stack** %newNode, align 8
+  ret %struct.Stack* %4
+}
+
+declare noalias i8* @malloc(i64) nounwind
+
+define %struct.List* @createListNode(i32 %data) nounwind uwtable {
+entry:
+  %data.addr = alloca i32, align 4
+  %newNode = alloca %struct.List*, align 8
+  store i32 %data, i32* %data.addr, align 4
+  %call = call noalias i8* @malloc(i64 16) nounwind
+  %0 = bitcast i8* %call to %struct.List*
+  store %struct.List* %0, %struct.List** %newNode, align 8
+  %1 = load i32* %data.addr, align 4
+  %2 = load %struct.List** %newNode, align 8
+  %data1 = getelementptr inbounds %struct.List* %2, i32 0, i32 0
+  store i32 %1, i32* %data1, align 4
+  %3 = load %struct.List** %newNode, align 8
+  %next = getelementptr inbounds %struct.List* %3, i32 0, i32 1
+  store %struct.List* null, %struct.List** %next, align 8
+  %4 = load %struct.List** %newNode, align 8
+  ret %struct.List* %4
+}
+
+define %struct.Graph* @createGraph(i32 %V) nounwind uwtable {
+entry:
+  %V.addr = alloca i32, align 4
+  %graph = alloca %struct.Graph*, align 8
+  %i = alloca i32, align 4
+  store i32 %V, i32* %V.addr, align 4
+  %call = call noalias i8* @malloc(i64 16) nounwind
+  %0 = bitcast i8* %call to %struct.Graph*
+  store %struct.Graph* %0, %struct.Graph** %graph, align 8
+  %1 = load i32* %V.addr, align 4
+  %2 = load %struct.Graph** %graph, align 8
+  %V1 = getelementptr inbounds %struct.Graph* %2, i32 0, i32 0
+  store i32 %1, i32* %V1, align 4
+  %3 = load i32* %V.addr, align 4
+  %conv = sext i32 %3 to i64
+  %mul = mul i64 %conv, 16
+  %call2 = call noalias i8* @malloc(i64 %mul) nounwind
+  %4 = bitcast i8* %call2 to %struct.List*
+  %5 = load %struct.Graph** %graph, align 8
+  %adj = getelementptr inbounds %struct.Graph* %5, i32 0, i32 1
+  store %struct.List* %4, %struct.List** %adj, align 8
+  store i32 0, i32* %i, align 4
+  br label %for.cond
+
+for.cond:                                         ; preds = %for.inc, %entry
+  %6 = load i32* %i, align 4
+  %7 = load i32* %V.addr, align 4
+  %cmp = icmp slt i32 %6, %7
+  br i1 %cmp, label %for.body, label %for.end
+
+for.body:                                         ; preds = %for.cond
+  %8 = load i32* %i, align 4
+  %idxprom = sext i32 %8 to i64
+  %9 = load %struct.Graph** %graph, align 8
+  %adj4 = getelementptr inbounds %struct.Graph* %9, i32 0, i32 1
+  %10 = load %struct.List** %adj4, align 8
+  %arrayidx = getelementptr inbounds %struct.List* %10, i64 %idxprom
+  %next = getelementptr inbounds %struct.List* %arrayidx, i32 0, i32 1
+  store %struct.List* null, %struct.List** %next, align 8
+  br label %for.inc
+
+for.inc:                                          ; preds = %for.body
+  %11 = load i32* %i, align 4
+  %inc = add nsw i32 %11, 1
+  store i32 %inc, i32* %i, align 4
+  br label %for.cond
+
+for.end:                                          ; preds = %for.cond
+  %12 = load %struct.Graph** %graph, align 8
+  ret %struct.Graph* %12
+}
+
+define void @addEdge(%struct.Graph* %graph, i32 %v, i32 %w) nounwind uwtable {
+entry:
+  %graph.addr = alloca %struct.Graph*, align 8
+  %v.addr = alloca i32, align 4
+  %w.addr = alloca i32, align 4
+  %newNode = alloca %struct.List*, align 8
+  store %struct.Graph* %graph, %struct.Graph** %graph.addr, align 8
+  store i32 %v, i32* %v.addr, align 4
+  store i32 %w, i32* %w.addr, align 4
+  %0 = load i32* %w.addr, align 4
+  %call = call %struct.List* @createListNode(i32 %0)
+  store %struct.List* %call, %struct.List** %newNode, align 8
+  %1 = load i32* %v.addr, align 4
+  %idxprom = sext i32 %1 to i64
+  %2 = load %struct.Graph** %graph.addr, align 8
+  %adj = getelementptr inbounds %struct.Graph* %2, i32 0, i32 1
+  %3 = load %struct.List** %adj, align 8
+  %arrayidx = getelementptr inbounds %struct.List* %3, i64 %idxprom
+  %next = getelementptr inbounds %struct.List* %arrayidx, i32 0, i32 1
+  %4 = load %struct.List** %next, align 8
+  %5 = load %struct.List** %newNode, align 8
+  %next1 = getelementptr inbounds %struct.List* %5, i32 0, i32 1
+  store %struct.List* %4, %struct.List** %next1, align 8
+  %6 = load %struct.List** %newNode, align 8
+  %7 = load i32* %v.addr, align 4
+  %idxprom2 = sext i32 %7 to i64
+  %8 = load %struct.Graph** %graph.addr, align 8
+  %adj3 = getelementptr inbounds %struct.Graph* %8, i32 0, i32 1
+  %9 = load %struct.List** %adj3, align 8
+  %arrayidx4 = getelementptr inbounds %struct.List* %9, i64 %idxprom2
+  %next5 = getelementptr inbounds %struct.List* %arrayidx4, i32 0, i32 1
+  store %struct.List* %6, %struct.List** %next5, align 8
+  ret void
+}
+
+define void @topologicalSortUtil(%struct.Graph* %graph, i32 %v, i8* %visited, %struct.Stack** %stack) nounwind uwtable {
+entry:
+  %graph.addr = alloca %struct.Graph*, align 8
+  %v.addr = alloca i32, align 4
+  %visited.addr = alloca i8*, align 8
+  %stack.addr = alloca %struct.Stack**, align 8
+  %current = alloca %struct.List*, align 8
+  %adjacentVertex = alloca i32, align 4
+  %newNode = alloca %struct.Stack*, align 8
+  store %struct.Graph* %graph, %struct.Graph** %graph.addr, align 8
+  store i32 %v, i32* %v.addr, align 4
+  store i8* %visited, i8** %visited.addr, align 8
+  store %struct.Stack** %stack, %struct.Stack*** %stack.addr, align 8
+  %0 = load i32* %v.addr, align 4
+  %idxprom = sext i32 %0 to i64
+  %1 = load i8** %visited.addr, align 8
+  %arrayidx = getelementptr inbounds i8* %1, i64 %idxprom
+  store i8 1, i8* %arrayidx, align 1
+  %2 = load i32* %v.addr, align 4
+  %idxprom1 = sext i32 %2 to i64
+  %3 = load %struct.Graph** %graph.addr, align 8
+  %adj = getelementptr inbounds %struct.Graph* %3, i32 0, i32 1
+  %4 = load %struct.List** %adj, align 8
+  %arrayidx2 = getelementptr inbounds %struct.List* %4, i64 %idxprom1
+  %next = getelementptr inbounds %struct.List* %arrayidx2, i32 0, i32 1
+  %5 = load %struct.List** %next, align 8
+  store %struct.List* %5, %struct.List** %current, align 8
+  br label %while.cond
+
+while.cond:                                       ; preds = %if.end, %entry
+  %6 = load %struct.List** %current, align 8
+  %cmp = icmp ne %struct.List* %6, null
+  br i1 %cmp, label %while.body, label %while.end
+
+while.body:                                       ; preds = %while.cond
+  %7 = load %struct.List** %current, align 8
+  %data = getelementptr inbounds %struct.List* %7, i32 0, i32 0
+  %8 = load i32* %data, align 4
+  store i32 %8, i32* %adjacentVertex, align 4
+  %9 = load i32* %adjacentVertex, align 4
+  %idxprom3 = sext i32 %9 to i64
+  %10 = load i8** %visited.addr, align 8
+  %arrayidx4 = getelementptr inbounds i8* %10, i64 %idxprom3
+  %11 = load i8* %arrayidx4, align 1
+  %tobool = trunc i8 %11 to i1
+  br i1 %tobool, label %if.end, label %if.then
+
+if.then:                                          ; preds = %while.body
+  %12 = load %struct.Graph** %graph.addr, align 8
+  %13 = load i32* %adjacentVertex, align 4
+  %14 = load i8** %visited.addr, align 8
+  %15 = load %struct.Stack*** %stack.addr, align 8
+  call void @topologicalSortUtil(%struct.Graph* %12, i32 %13, i8* %14, %struct.Stack** %15)
+  br label %if.end
+
+if.end:                                           ; preds = %if.then, %while.body
+  %16 = load %struct.List** %current, align 8
+  %next5 = getelementptr inbounds %struct.List* %16, i32 0, i32 1
+  %17 = load %struct.List** %next5, align 8
+  store %struct.List* %17, %struct.List** %current, align 8
+  br label %while.cond
+
+while.end:                                        ; preds = %while.cond
+  %18 = load i32* %v.addr, align 4
+  %call = call %struct.Stack* @createStackNode(i32 %18)
+  store %struct.Stack* %call, %struct.Stack** %newNode, align 8
+  %19 = load %struct.Stack*** %stack.addr, align 8
+  %20 = load %struct.Stack** %19, align 8
+  %21 = load %struct.Stack** %newNode, align 8
+  %next6 = getelementptr inbounds %struct.Stack* %21, i32 0, i32 1
+  store %struct.Stack* %20, %struct.Stack** %next6, align 8
+  %22 = load %struct.Stack** %newNode, align 8
+  %23 = load %struct.Stack*** %stack.addr, align 8
+  store %struct.Stack* %22, %struct.Stack** %23, align 8
+  ret void
+}
+
+define void @topologicalSort(%struct.Graph* %graph) nounwind uwtable {
+entry:
+  %graph.addr = alloca %struct.Graph*, align 8
+  %stack = alloca %struct.Stack*, align 8
+  %visited = alloca i8*, align 8
+  %i = alloca i32, align 4
+  %i3 = alloca i32, align 4
+  %temp = alloca %struct.Stack*, align 8
+  store %struct.Graph* %graph, %struct.Graph** %graph.addr, align 8
+  store %struct.Stack* null, %struct.Stack** %stack, align 8
+  %0 = load %struct.Graph** %graph.addr, align 8
+  %V = getelementptr inbounds %struct.Graph* %0, i32 0, i32 0
+  %1 = load i32* %V, align 4
+  %conv = sext i32 %1 to i64
+  %mul = mul i64 %conv, 1
+  %call = call noalias i8* @malloc(i64 %mul) nounwind
+  store i8* %call, i8** %visited, align 8
+  store i32 0, i32* %i, align 4
+  br label %for.cond
+
+for.cond:                                         ; preds = %for.inc, %entry
+  %2 = load i32* %i, align 4
+  %3 = load %struct.Graph** %graph.addr, align 8
+  %V1 = getelementptr inbounds %struct.Graph* %3, i32 0, i32 0
+  %4 = load i32* %V1, align 4
+  %cmp = icmp slt i32 %2, %4
+  br i1 %cmp, label %for.body, label %for.end
+
+for.body:                                         ; preds = %for.cond
+  %5 = load i32* %i, align 4
+  %idxprom = sext i32 %5 to i64
+  %6 = load i8** %visited, align 8
+  %arrayidx = getelementptr inbounds i8* %6, i64 %idxprom
+  store i8 0, i8* %arrayidx, align 1
+  br label %for.inc
+
+for.inc:                                          ; preds = %for.body
+  %7 = load i32* %i, align 4
+  %inc = add nsw i32 %7, 1
+  store i32 %inc, i32* %i, align 4
+  br label %for.cond
+
+for.end:                                          ; preds = %for.cond
+  store i32 0, i32* %i3, align 4
+  br label %for.cond4
+
+for.cond4:                                        ; preds = %for.inc11, %for.end
+  %8 = load i32* %i3, align 4
+  %9 = load %struct.Graph** %graph.addr, align 8
+  %V5 = getelementptr inbounds %struct.Graph* %9, i32 0, i32 0
+  %10 = load i32* %V5, align 4
+  %cmp6 = icmp slt i32 %8, %10
+  br i1 %cmp6, label %for.body8, label %for.end13
+
+for.body8:                                        ; preds = %for.cond4
+  %11 = load i32* %i3, align 4
+  %idxprom9 = sext i32 %11 to i64
+  %12 = load i8** %visited, align 8
+  %arrayidx10 = getelementptr inbounds i8* %12, i64 %idxprom9
+  %13 = load i8* %arrayidx10, align 1
+  %tobool = trunc i8 %13 to i1
+  br i1 %tobool, label %if.end, label %if.then
+
+if.then:                                          ; preds = %for.body8
+  %14 = load %struct.Graph** %graph.addr, align 8
+  %15 = load i32* %i3, align 4
+  %16 = load i8** %visited, align 8
+  call void @topologicalSortUtil(%struct.Graph* %14, i32 %15, i8* %16, %struct.Stack** %stack)
+  br label %if.end
+
+if.end:                                           ; preds = %if.then, %for.body8
+  br label %for.inc11
+
+for.inc11:                                        ; preds = %if.end
+  %17 = load i32* %i3, align 4
+  %inc12 = add nsw i32 %17, 1
+  store i32 %inc12, i32* %i3, align 4
+  br label %for.cond4
+
+for.end13:                                        ; preds = %for.cond4
+  br label %while.cond
+
+while.cond:                                       ; preds = %while.body, %for.end13
+  %18 = load %struct.Stack** %stack, align 8
+  %cmp14 = icmp ne %struct.Stack* %18, null
+  br i1 %cmp14, label %while.body, label %while.end
+
+while.body:                                       ; preds = %while.cond
+  %19 = load %struct.Stack** %stack, align 8
+  %data = getelementptr inbounds %struct.Stack* %19, i32 0, i32 0
+  %20 = load i32* %data, align 4
+  %call16 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i32 %20)
+  %21 = load %struct.Stack** %stack, align 8
+  store %struct.Stack* %21, %struct.Stack** %temp, align 8
+  %22 = load %struct.Stack** %stack, align 8
+  %next = getelementptr inbounds %struct.Stack* %22, i32 0, i32 1
+  %23 = load %struct.Stack** %next, align 8
+  store %struct.Stack* %23, %struct.Stack** %stack, align 8
+  %24 = load %struct.Stack** %temp, align 8
+  %25 = bitcast %struct.Stack* %24 to i8*
+  call void @free(i8* %25) nounwind
+  br label %while.cond
+
+while.end:                                        ; preds = %while.cond
+  %26 = load i8** %visited, align 8
+  call void @free(i8* %26) nounwind
+  %27 = load %struct.Graph** %graph.addr, align 8
+  %adj = getelementptr inbounds %struct.Graph* %27, i32 0, i32 1
+  %28 = load %struct.List** %adj, align 8
+  %29 = bitcast %struct.List* %28 to i8*
+  call void @free(i8* %29) nounwind
+  %30 = load %struct.Graph** %graph.addr, align 8
+  %31 = bitcast %struct.Graph* %30 to i8*
+  call void @free(i8* %31) nounwind
+  ret void
+}
+
+declare i32 @printf(i8*, ...)
+
+declare void @free(i8*) nounwind
+
+define i32 @main() nounwind uwtable {
+entry:
+  %retval = alloca i32, align 4
+  %g = alloca %struct.Graph*, align 8
+  store i32 0, i32* %retval
+  %call = call %struct.Graph* @createGraph(i32 6)
+  store %struct.Graph* %call, %struct.Graph** %g, align 8
+  %0 = load %struct.Graph** %g, align 8
+  call void @addEdge(%struct.Graph* %0, i32 5, i32 2)
+  %1 = load %struct.Graph** %g, align 8
+  call void @addEdge(%struct.Graph* %1, i32 5, i32 0)
+  %2 = load %struct.Graph** %g, align 8
+  call void @addEdge(%struct.Graph* %2, i32 4, i32 0)
+  %3 = load %struct.Graph** %g, align 8
+  call void @addEdge(%struct.Graph* %3, i32 4, i32 1)
+  %4 = load %struct.Graph** %g, align 8
+  call void @addEdge(%struct.Graph* %4, i32 2, i32 3)
+  %5 = load %struct.Graph** %g, align 8
+  call void @addEdge(%struct.Graph* %5, i32 3, i32 1)
+  %call1 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([28 x i8]* @.str1, i32 0, i32 0))
+  %6 = load %struct.Graph** %g, align 8
+  call void @topologicalSort(%struct.Graph* %6)
+  ret i32 0
+}

@@ -1,0 +1,56 @@
+Reaching definition analysis for Function 'foo':
+entry:
+0   %y.addr = alloca i32
+1   %x.addr = alloca i32
+2   %b.addr = alloca i32
+3   %a.addr = alloca i32
+4   store i32 0, i32* %y.addr; DUMMY
+5   store i32 0, i32* %x.addr; DUMMY
+6   store i32 0, i32* %b.addr; DUMMY
+7   store i32 0, i32* %a.addr; DUMMY
+8   store i32 %b, i32* %b.addr
+9   store i32 %a, i32* %a.addr
+10   %b1 = load i32* %b.addr
+11   %a2 = load i32* %a.addr
+12   %sub = sub i32 %a2, %b1
+13   store i32 %sub, i32* %x.addr
+14   %b3 = load i32* %b.addr
+15   %a4 = load i32* %a.addr
+16   %mul = mul i32 %a4, %b3
+17   store i32 %mul, i32* %y.addr
+18   br label %while.cond
+
+while.cond:
+19   %b5 = load i32* %b.addr
+20   %a6 = load i32* %a.addr
+21   %sub7 = sub i32 %a6, %b5
+22   %y = load i32* %y.addr
+23   %ne = icmp ne i32 %y, %sub7
+24   br i1 %ne, label %while.body, label %while.end
+
+while.body:
+25   %a8 = load i32* %a.addr
+26   %sub9 = sub i32 %a8, 1
+27   store i32 %sub9, i32* %a.addr
+28   %b10 = load i32* %b.addr
+29   %a11 = load i32* %a.addr
+30   %sub12 = sub i32 %a11, %b10
+31   store i32 %sub12, i32* %x.addr
+32   br label %while.cond
+
+while.end:
+33   ret void
+
+entry:
+  IN:
+  OUT: 8 9 13 17
+while.cond:
+  IN: 8 9 13 17 27 31
+  OUT: 8 9 13 17 27 31
+while.body:
+  IN: 8 9 13 17 27 31
+  OUT: 8 17 27 31
+while.end:
+  IN: 8 9 13 17 27 31
+  OUT: 8 9 13 17 27 31
+
