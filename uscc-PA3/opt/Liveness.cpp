@@ -82,12 +82,15 @@ bool Liveness::runOnFunction(Function &F)
 		change = 0;
 		for(auto it=visited.begin(); it!=visited.end(); it++){
 			std::set<StringRef>old_IN = bb2In[*it]; 
+
 			for( auto successor=succ_begin(*it); successor!=succ_end(*it); successor++){
 				bb2Out[*it].insert(bb2In[*it].begin(), bb2In[*it].end());
 			}
+
 			auto tmp_out = bb2Out[*it];
 			tmp_out.insert(bb2Use[*it].begin(), bb2Use[*it].end());
-			bb2In[*it] = tmp_out;
+			set_difference(tmp_out.begin(), tmp_out.end(), bb2Def[*it].begin(), bb2Def[*it].end(), std::inserter(bb2In[*it], bb2In[*it].end()));
+			
 			if(old_IN == bb2In[*it]){
 				change = 1;
 			}
