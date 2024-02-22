@@ -65,13 +65,16 @@ bool Liveness::runOnFunction(Function &F)
 		bb2Use[&bb] = Use;
 		bb2Def[&bb] = Def;
 		Use.clear();
+		Def.clear();
 	}
 
 
     // Step #3: compute post order traversal.
 	std::vector<BasicBlock*> visited;
+	std::vector<BasicBlock*> preorderVisited;
 	for(auto &bb : F){
-		postOrderTraversal(&bb, visited);
+		if(find(preorderVisited.begin(), preorderVisited.end(), &bb) == preorderVisited.end())
+			postOrderTraversal(&bb, visited, preorderVisited);
 	}
 
     // Step #4: iterate over control flow graph of the input function until the fixed point.
@@ -84,14 +87,14 @@ bool Liveness::runOnFunction(Function &F)
 			std::set<StringRef>old_IN = bb2In[*it]; 
 
 			for( auto successor=succ_begin(*it); successor!=succ_end(*it); successor++){
-				bb2Out[*it].insert(bb2In[*it].begin(), bb2In[*it].end());
+				bb2Out[*it].insert(bb2In[*successor].begin(), bb2In[*successor].end());
 			}
 
 			auto tmp_out = bb2Out[*it];
 			tmp_out.insert(bb2Use[*it].begin(), bb2Use[*it].end());
 			set_difference(tmp_out.begin(), tmp_out.end(), bb2Def[*it].begin(), bb2Def[*it].end(), std::inserter(bb2In[*it], bb2In[*it].end()));
 			
-			if(old_IN == bb2In[*it]){
+			if(old_IN != bb2In[*it]){
 				change = 1;
 			}
 		}
@@ -120,13 +123,18 @@ bool Liveness::runOnFunction(Function &F)
     return false;
 }
 
-void Liveness::postOrderTraversal(llvm::BasicBlock *current, std::vector<llvm::BasicBlock*> &visited){
+void Liveness::postOrderTraversal(llvm::BasicBlock *current, std::vector<llvm::BasicBlock*> &visited, std::vector<llvm::BasicBlock*> &preorderVisited)
+{
 
-	for(auto it = succ_begin(current); it != succ_end(current); it++){
-		if(find(visited.begin(), visited.end(), *it) == visited.end())
-			postOrderTraversal(*it, visited);
+	preorderVisited.push_back(current);
+
+	for(auto it = succ_begin(current); it != succ_end(current); ++it){
+		if(find(preorderVisited.begin(), preorderVisited.end(), *it) == preorderVisited.end())
+			postOrderTraversal(*it, visited, preorderVisited);
 	}
+
 	visited.push_back(current);
+	return;
 }
 
 bool Liveness::isDead(llvm::Instruction &inst) 

@@ -31,7 +31,7 @@ private:
     }
     virtual bool runOnFunction(llvm::Function &F) override;
 
-	void postOrderTraversal(llvm::BasicBlock *current, std::vector<llvm::BasicBlock*> &visited);
+	void postOrderTraversal(llvm::BasicBlock *current, std::vector<llvm::BasicBlock*> &visited, std::vector<llvm::BasicBlock*> &preorderVisited);
 
     virtual void releaseMemory() override 
     {
