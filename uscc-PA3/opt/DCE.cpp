@@ -8,6 +8,8 @@
 
 #include "Passes.h"
 #include "Liveness.h"
+#include <iostream>
+#include <typeinfo>
 
 using namespace llvm;
 namespace 
@@ -61,10 +63,63 @@ bool DeadCodeElimination::runOnFunction(llvm::Function &F)
         return false;
 
     Liveness &lv = getAnalysisID<Liveness>(&Liveness::ID);
+	lv.runOnFunction(F);
+
+	std::set<llvm::Instruction*> deadVars;
+	std::set<llvm::Instruction*> deadAllocas;
 
     // PA3
     // Step #1: get a set of dead instructions and remove them.
-    
+	bool changed = true;
+	while(changed){
+		changed = false;
+		for (auto &bb : F){
+			for(auto it = bb.begin() ; it != bb.end() ; it++){
+				auto &inst = *it;
+				if(lv.isDead(inst)){
+					deadVars.insert(&inst);
+					auto val = dyn_cast_or_null<llvm::StoreInst>(&inst)->getValueOperand();
+					if(dyn_cast_or_null<llvm::Instruction>(val)!=NULL){
+						deadVars.insert(dyn_cast_or_null<llvm::Instruction>(val));
+						std::set<llvm::Instruction*> dead;
+						findDeadDefinitions(&inst, dead);
+						if(!dead.empty()) deadVars.insert(dead.begin(), dead.end());
+					}
+				}
+			}
+		}
+		if(!deadVars.empty())
+		{ 
+			for(auto &inst : deadVars){
+				if(!inst->use_empty()){
+					inst->replaceAllUsesWith(UndefValue::getNullValue(inst->getType()));
+				}
+		//		std::cout << "deleted instruction" << '\n';
+				inst->eraseFromParent();
+			}
+			lv.releaseMemory();
+			lv.runOnFunction(F);
+			changed = true;
+			deadVars.clear();
+		}
+		else ;
+			//std::cout<< "deadVars is empty()" << '\n';
+	}
     // Step #2: remove the Alloca instructions having no uses.
-    return false;
+		for(auto &bb : F){
+			for(auto &inst : bb){
+				if(inst.getOpcode() == llvm::Instruction::Alloca && inst.use_empty()){
+		//			std::cout << "alloca instruction without any use" << '\n';
+					deadAllocas.insert(&inst);
+				}
+			}
+		}
+
+		for(auto &inst : deadAllocas){
+		//	std::cout << "deleted instruction" << '\n';
+			inst->eraseFromParent();
+		}
+		
+
+    return true;
 }

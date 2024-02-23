@@ -7,6 +7,7 @@
 */
 
 #include "Liveness.h"
+#include <iostream>
 
 using namespace std;
 using namespace llvm;
@@ -52,12 +53,14 @@ bool Liveness::runOnFunction(Function &F)
 			if(inst.getOpcode() == llvm::Instruction::Load){
 				auto operand = dyn_cast_or_null<llvm::LoadInst>(&inst)->getPointerOperand();
 				if(namedVars.find(operand->getName()) != namedVars.end()){
+					if(Def.find(operand->getName()) != Def.end()) Def.erase(operand->getName());
 					Use.insert(operand->getName());				 
 				}
 			}
 			if(inst.getOpcode() == llvm::Instruction::Store){
 				auto operand = dyn_cast_or_null<llvm::StoreInst>(&inst)->getPointerOperand();
 				if(namedVars.find(operand->getName()) != namedVars.end()){
+					if(Use.find(operand->getName()) != Use.end()) Use.erase(operand->getName());
 					Def.insert(operand->getName());				 
 				}
 			}
@@ -125,9 +128,7 @@ bool Liveness::runOnFunction(Function &F)
 
 void Liveness::postOrderTraversal(llvm::BasicBlock *current, std::vector<llvm::BasicBlock*> &visited, std::vector<llvm::BasicBlock*> &preorderVisited)
 {
-
 	preorderVisited.push_back(current);
-
 	for(auto it = succ_begin(current); it != succ_end(current); ++it){
 		if(find(preorderVisited.begin(), preorderVisited.end(), *it) == preorderVisited.end())
 			postOrderTraversal(*it, visited, preorderVisited);
@@ -137,8 +138,39 @@ void Liveness::postOrderTraversal(llvm::BasicBlock *current, std::vector<llvm::B
 	return;
 }
 
+void Liveness::isLiveWithinBB(llvm::Instruction &inst, BasicBlock* bb, std::set<StringRef> &LiveWithinBB){
+
+	BasicBlock::iterator it(bb->end());
+	BasicBlock::iterator it_end(inst);
+
+	//auto it = bb->end();
+	//auto &currInst = *it;
+	//while(!inst.isIdenticalTo(&currInst)){
+	while(it != it_end){
+	//for(auto it = bb->rbegin() ; it !=  ; it++){
+		auto &currInst = *it;
+		if(currInst.getOpcode() == llvm::Instruction::Load){
+			auto operand = dyn_cast_or_null<llvm::LoadInst>(&currInst)->getPointerOperand();
+			if(namedVars.find(operand->getName()) != namedVars.end()){
+				LiveWithinBB.insert(operand->getName());				 
+			}
+		}
+		if(currInst.getOpcode() == llvm::Instruction::Store){
+			auto operand = dyn_cast_or_null<llvm::StoreInst>(&currInst)->getPointerOperand();
+			if(namedVars.find(operand->getName()) != namedVars.end()){
+				if(!LiveWithinBB.empty()) LiveWithinBB.erase(operand->getName());				 
+			}
+		}
+		--it;
+	}
+	
+	return;
+	
+}
+
 bool Liveness::isDead(llvm::Instruction &inst) 
 {
+	//std::cout << "Hey" << '\n';
     BasicBlock *bb = inst.getParent();
     if (!bb)
         return true;
@@ -146,5 +178,18 @@ bool Liveness::isDead(llvm::Instruction &inst)
         return true;
 
     // PA3
+	if(inst.getOpcode() == llvm::Instruction::Store){
+		auto operand = dyn_cast_or_null<llvm::StoreInst>(&inst)->getPointerOperand();
+		if(namedVars.find(operand->getName()) != namedVars.end()){
+			//Then do the analysis for whether the instruction is dead or not.
+			std::set<StringRef> LiveWithinBB = bb2Out[bb];
+			isLiveWithinBB(inst, bb, LiveWithinBB);
+			if(LiveWithinBB.find(operand->getName())==LiveWithinBB.end()){
+				return true;
+			}
+			else return false;
+		}
+	}
+	
     return false;
 }

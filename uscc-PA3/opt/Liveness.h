@@ -32,6 +32,7 @@ private:
     virtual bool runOnFunction(llvm::Function &F) override;
 
 	void postOrderTraversal(llvm::BasicBlock *current, std::vector<llvm::BasicBlock*> &visited, std::vector<llvm::BasicBlock*> &preorderVisited);
+	void isLiveWithinBB(llvm::Instruction &inst, BasicBlock* bb, std::set<StringRef> &LiveWithinBB);
 
     virtual void releaseMemory() override 
     {

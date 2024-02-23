@@ -93,7 +93,26 @@ bool ReachingDefinitions::runOnFunction(Function &F) {
   // Step #1: identify program variables.
   set<Value*> namedDefs;
 
+  for(auto &bb : F ){
+	  for(auto &inst : bb){
+		  if(dyn_cast_or_null<AllocaInst>(&inst) != NULL){
+			 namedDefs.insert(&inst); 
+		  }
+	  }
+  }
+
   // Step #2: insert dummy definitions for each local variable
+  std::map<Function*, std::set<StoreInst*>> dummyDefs;
+  std::set<StoreInst*> dummyStores;
+  for(auto &bb : F ){
+	  for(auto &inst : bb){
+		  if(dyn_cast_or_null<AllocaInst>(&inst) != NULL){
+			 auto allocaInst = dyn_cast_or_null<AllocaInst>(&inst);
+			 auto si = new StoreInst(Constant::getNullValue(allocaInst->getType()->getPointerElementType()), allocaInst);
+
+		  }
+	  }
+  }
 
   // Step #3: find out all definitions of namedDefs variables.
   map<Value*, set<uint32_t>> var2Defs;
