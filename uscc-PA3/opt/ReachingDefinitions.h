@@ -24,6 +24,7 @@ private:
   std::map<BasicBlock *, std::set<uint32_t>> bb2Out;
   std::map<Function*, std::set<StoreInst*>> dummyDefs;
   void dumpReachingDef(Function &F);
+  void postOrderTraversal(llvm::BasicBlock *current, std::vector<llvm::BasicBlock*> &visited, std::vector<llvm::BasicBlock*> &preorderVisited);
 public:
   static char ID;
   ReachingDefinitions();

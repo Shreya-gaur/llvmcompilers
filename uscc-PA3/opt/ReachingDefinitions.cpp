@@ -102,27 +102,99 @@ bool ReachingDefinitions::runOnFunction(Function &F) {
   }
 
   // Step #2: insert dummy definitions for each local variable
-  std::map<Function*, std::set<StoreInst*>> dummyDefs;
   std::set<StoreInst*> dummyStores;
   for(auto &bb : F ){
 	  for(auto &inst : bb){
 		  if(dyn_cast_or_null<AllocaInst>(&inst) != NULL){
 			 auto allocaInst = dyn_cast_or_null<AllocaInst>(&inst);
 			 auto si = new StoreInst(Constant::getNullValue(allocaInst->getType()->getPointerElementType()), allocaInst);
-
+			 frontBB.getInstList().insert(pos, si);
+			 dummyStores.insert(si);
 		  }
 	  }
   }
+  dummyDefs[&F] = dummyStores; 
 
   // Step #3: find out all definitions of namedDefs variables.
   map<Value*, set<uint32_t>> var2Defs;
-
+  set<uint32_t> setofDefs;
+  uint32_t id = 0;
+  for(auto &bb : F ){
+	  for(auto &inst : bb){
+		  inst2Id[&inst] = id;
+		  id2Inst[&F].push_back(&inst);
+		  if(dyn_cast_or_null<StoreInst>(&inst) != NULL){
+			auto operand = dyn_cast_or_null<llvm::StoreInst>(&inst)->getPointerOperand();
+			if(namedDefs.find(operand) != namedDefs.end()){
+				var2Defs[operand].insert(inst2Id[&inst]);
+			}
+		  }
+		  ++id;
+	  }
+  }
+  
   // Step #4: calculate GEN/KILL set for each basic block
+  // rda1 gen 27 and kill 34
   map<BasicBlock *, set<uint32_t>> bb2Kill, bb2Gen;
+  set<uint32_t> K, G;
+  for(auto &bb : F){
+	  for(auto &inst : bb){
+		  if(dyn_cast_or_null<StoreInst>(&inst) != NULL){
+			auto operand = dyn_cast_or_null<llvm::StoreInst>(&inst)->getPointerOperand();
+			if(namedDefs.find(operand) != namedDefs.end()){
+				G.insert(inst2Id[&inst]);	
+				
+				//var2Defs - op
+				set_difference(var2Defs[operand].begin(), var2Defs[operand].end(), G.begin(), G.end(), std::inserter(K, K.end()));
 
-  // Step #5: compute post order traversal
+				std::set<uint32_t> gen, kill;
+				set_difference(bb2Gen[&bb].begin(), bb2Gen[&bb].end(), K.begin(), K.end(), std::inserter(gen, gen.end()));
+				bb2Gen[&bb] = gen;
+				bb2Gen[&bb].insert(G.begin(), G.end());
+
+				set_difference(bb2Kill[&bb].begin(), bb2Kill[&bb].end(), G.begin(), G.end(), std::inserter(kill, kill.end()));
+				bb2Kill[&bb] = kill;
+				bb2Kill[&bb].insert(K.begin(), K.end());
+
+			}
+		  }
+		 K.clear();
+		 G.clear();
+	  }
+  }
+
+  // Step #5: compute reverse post order traversal
+	std::vector<BasicBlock*> visited;
+	std::vector<BasicBlock*> preorderVisited;
+	for(auto &bb : F){
+		if(find(preorderVisited.begin(), preorderVisited.end(), &bb) == preorderVisited.end())
+			postOrderTraversal(&bb, visited, preorderVisited);
+	}
+
+	std::reverse(visited.begin(), visited.end());
 
   // Step #6: iterate over control flow graph of the input function until the fixed point.
+    unsigned cnt = 0;
+    unsigned change = 1;
+	while(change == 1){
+		cnt++;
+		change = 0;
+		for(auto it=visited.begin(); it!=visited.end(); it++){
+			auto old_OUT = bb2Out[*it]; 
+
+			for( auto pred=pred_begin(*it); pred!=pred_end(*it); pred++){
+				bb2In[*it].insert(bb2Out[*pred].begin(), bb2Out[*pred].end());
+			}
+
+			auto tmp_out = bb2In[*it];
+			tmp_out.insert(bb2Gen[*it].begin(), bb2Gen[*it].end());
+			set_difference(tmp_out.begin(), tmp_out.end(), bb2Kill[*it].begin(), bb2Kill[*it].end(), std::inserter(bb2Out[*it], bb2Out[*it].end()));
+			
+			if(old_OUT != bb2Out[*it]){
+				change = 1;
+			}
+		}
+	}
 
   // Step #7: print out IN and OUT set of each basic block.
   if (enableRDA)
@@ -130,4 +202,16 @@ bool ReachingDefinitions::runOnFunction(Function &F) {
 
   // ReachingDefinitions does not change the input function at all.
   return false;
+}
+
+void ReachingDefinitions::postOrderTraversal(llvm::BasicBlock *current, std::vector<llvm::BasicBlock*> &visited, std::vector<llvm::BasicBlock*> &preorderVisited)
+{
+	preorderVisited.push_back(current);
+	for(auto it = succ_begin(current); it != succ_end(current); ++it){
+		if(find(preorderVisited.begin(), preorderVisited.end(), *it) == preorderVisited.end())
+			postOrderTraversal(*it, visited, preorderVisited);
+	}
+
+	visited.push_back(current);
+	return;
 }
