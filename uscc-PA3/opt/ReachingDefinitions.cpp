@@ -26,17 +26,56 @@ FunctionPass *llvm::createRDAPass() {
 }
 
 bool ReachingDefinitions::hasUninitializedDef(LoadInst &ld) {
+  
   BasicBlock *BB = ld.getParent();
   assert(BB && bb2In.count(BB) && inst2Id.count(&ld) && "load must be attached to a basic block!");
   if (!ld.getPointerOperand()->hasName())
     return false;
 
   // PA3
+  //Take in the IN set of the block the instructoin belong to.
+  std::set<uint32_t> defs{bb2In[BB]};
+
+  BasicBlock::iterator it(BB->begin());
+  BasicBlock::iterator iter_end(ld);
+
+  while(it != iter_end){
+	auto &currInst = *it;
+	if(dyn_cast_or_null<StoreInst>(&currInst) != NULL){
+		std::vector<uint32_t> deadDefs;
+		for(auto iter=defs.end(); iter!=defs.begin(); --iter){
+			auto def = dyn_cast_or_null<StoreInst>(Id2Inst[*iter]);
+			if(def != NULL){
+				if(def->getPointerOperand() == dyn_cast_or_null<StoreInst>(&currInst)->getPointerOperand()){
+					deadDefs.push_back(*iter);
+				}
+			}
+		}
+		for(auto dead : deadDefs) defs.erase(dead);
+		deadDefs.clear();
+		defs.insert(inst2Id[&currInst]);				 
+	}
+	++it;
+  }
+
+  for(uint32_t id : defs){
+	  auto &inst = Id2Inst[id];
+	  if(isDummyStore(*inst)){
+	      auto store_operand = dyn_cast_or_null<llvm::StoreInst>(inst)->getPointerOperand();
+	      auto load_operand = dyn_cast_or_null<llvm::LoadInst>(&ld)->getPointerOperand();
+	      if(store_operand == load_operand){
+	    	  return true;
+	 	   }
+  	  }
+  } 
+
   return false;
 }
 
 void ReachingDefinitions::dumpReachingDef(Function &F) {
+
   outs() << "Reaching definition analysis for Function '" << F.getName() << "':\n";
+
   int id = 0;
   for (auto &bb : F) {
     outs()<<bb.getName()<<":\n";
@@ -50,17 +89,21 @@ void ReachingDefinitions::dumpReachingDef(Function &F) {
   }
 
   for (auto &bb : F) {
-    outs() << bb.getName() << ":\n";
-    outs() << "  IN:";
-    for (auto &id : bb2In[&bb])
-      outs() << " " << id;
-    outs() << "\n";
-    outs() << "  OUT:";
-    for (auto &id : bb2Out[&bb])
-      outs() << " " << id;
-    outs() << "\n";
+	outs() << bb.getName() << ":\n";
+	outs() << "  IN:";
+	for (auto &id : bb2In[&bb])
+	  outs() << " " << id;
+	outs() << "\n";
+	outs() << "  OUT:";
+	for (auto &id : bb2Out[&bb])
+	  outs() << " " << id;
+	outs() << "\n";
   }
   outs()<<"\n";
+}
+
+std::vector<uint32_t> ReachingDefinitions::getloadIds(){
+	return loadIds;
 }
 
 bool ReachingDefinitions::isDummyStore(Instruction &inst) {
@@ -122,19 +165,21 @@ bool ReachingDefinitions::runOnFunction(Function &F) {
   for(auto &bb : F ){
 	  for(auto &inst : bb){
 		  inst2Id[&inst] = id;
-		  id2Inst[&F].push_back(&inst);
+		  Id2Inst[id] = &inst;
 		  if(dyn_cast_or_null<StoreInst>(&inst) != NULL){
 			auto operand = dyn_cast_or_null<llvm::StoreInst>(&inst)->getPointerOperand();
 			if(namedDefs.find(operand) != namedDefs.end()){
 				var2Defs[operand].insert(inst2Id[&inst]);
 			}
 		  }
+		  if(dyn_cast_or_null<LoadInst>(&inst) != NULL){
+			  loadIds.push_back(id);
+		  }
 		  ++id;
 	  }
   }
   
   // Step #4: calculate GEN/KILL set for each basic block
-  // rda1 gen 27 and kill 34
   map<BasicBlock *, set<uint32_t>> bb2Kill, bb2Gen;
   set<uint32_t> K, G;
   for(auto &bb : F){
@@ -144,7 +189,6 @@ bool ReachingDefinitions::runOnFunction(Function &F) {
 			if(namedDefs.find(operand) != namedDefs.end()){
 				G.insert(inst2Id[&inst]);	
 				
-				//var2Defs - op
 				set_difference(var2Defs[operand].begin(), var2Defs[operand].end(), G.begin(), G.end(), std::inserter(K, K.end()));
 
 				std::set<uint32_t> gen, kill;

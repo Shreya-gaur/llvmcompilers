@@ -18,6 +18,9 @@ void initializeUninitializedVariablesPass(PassRegistry&);
 
 namespace {
 class UninitializedVariables : public FunctionPass {
+private:
+	std::map<Function*, std::set<StoreInst*>> dummyDefs;
+
 public:
   static char ID;
   UninitializedVariables() : FunctionPass(ID) {
@@ -25,6 +28,7 @@ public:
   }
   bool runOnFunction(llvm::Function &F) override;
   void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
+  void dumpUninitializedVars(Function &F); 
 };
 }
 
@@ -40,14 +44,65 @@ void UninitializedVariables::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
   AU.setPreservesCFG();
 }
 
+void UninitializedVariables::dumpUninitializedVars(Function &F) {
+
+  uint32_t id = 0;
+  for (auto &bb : F) {
+    outs()<<bb.getName()<<":\n";
+    for (Instruction& inst : bb) {
+      outs() << id++ << " " << inst;
+      if (std::find(dummyDefs[&F].begin(), dummyDefs[&F].end(), &inst) != dummyDefs[&F].end())
+        outs()<<"; DUMMY";
+      outs() << "\n";
+    }
+    outs() << "\n";
+  }
+
+}
+
 FunctionPass *llvm::createUninitializedVariablesPass() {
   return new UninitializedVariables();
 }
 
+
 bool UninitializedVariables::runOnFunction(llvm::Function &F) {
   if (F.empty()) return false;
+
+  outs() << "Function '" << F.getName() << "':\n";
   ReachingDefinitions &rda = getAnalysis<ReachingDefinitions>();
 
   // PA3
-  return false;
+  for(auto &bb : F){
+	  for(auto &inst : bb){
+		  if(dyn_cast_or_null<StoreInst>(&inst) != NULL){
+			  if(rda.isDummyStore(inst))
+				  dummyDefs[&F].insert(dyn_cast_or_null<StoreInst>(&inst));
+		  } 
+  	   }
+  }
+
+  dumpUninitializedVars(F);
+
+  outs() << "Use of Uninitialized variables: {";
+
+  uint32_t id=0; 
+  bool spflag = false;
+  for(auto &bb : F){
+	  for(auto &inst : bb){
+		  if(dyn_cast_or_null<LoadInst>(&inst) != NULL){
+			  auto ld = dyn_cast_or_null<LoadInst>(&inst);
+			  if(rda.hasUninitializedDef(*ld)){ 
+				  if(spflag == true) outs() << " ";
+				  outs() << id;	  
+			  	  spflag = true;
+  	  	  	  }
+		  }
+		  ++id;
+  	   }
+  }
+
+  outs() << "}" << '\n';
+  outs() << '\n';
+
+  return true;
 }

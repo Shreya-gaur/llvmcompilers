@@ -18,12 +18,13 @@ class ReachingDefinitions : public FunctionPass {
 private:
   // map instruction to its zero-based id
   std::map<Instruction*, uint32_t> inst2Id;
-  std::map<Function*, std::vector<Instruction*>> id2Inst;
+  std::map<Function*, std::vector<Instruction>> id2Inst;
+  std::map<uint32_t, Instruction*> Id2Inst;
+  std::vector<uint32_t> loadIds;
   // IN[BB] and OUT[BB]
   std::map<BasicBlock *, std::set<uint32_t>> bb2In;
   std::map<BasicBlock *, std::set<uint32_t>> bb2Out;
   std::map<Function*, std::set<StoreInst*>> dummyDefs;
-  void dumpReachingDef(Function &F);
   void postOrderTraversal(llvm::BasicBlock *current, std::vector<llvm::BasicBlock*> &visited, std::vector<llvm::BasicBlock*> &preorderVisited);
 public:
   static char ID;
@@ -41,8 +42,10 @@ public:
    * @param ld
    * @return true if the program variable read by the load has reaching definitions.
    */
+  void dumpReachingDef(Function &F);
   bool hasUninitializedDef(LoadInst &ld);
   bool isDummyStore(Instruction &inst);
+  std::vector<uint32_t> getloadIds();
 };
 }
 

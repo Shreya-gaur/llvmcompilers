@@ -94,6 +94,7 @@ bool DeadCodeElimination::runOnFunction(llvm::Function &F)
 				if(!inst->use_empty()){
 					inst->replaceAllUsesWith(UndefValue::getNullValue(inst->getType()));
 				}
+		//		std::cout << "deleted instruction" << '\n';
 				inst->eraseFromParent();
 			}
 			lv.releaseMemory();
@@ -101,18 +102,21 @@ bool DeadCodeElimination::runOnFunction(llvm::Function &F)
 			changed = true;
 			deadVars.clear();
 		}
-		else ;
+		else std::cout<< "";
+		//else std::cout<< "deadVars is empty()" << '\n';
 	}
     // Step #2: remove the Alloca instructions having no uses.
 		for(auto &bb : F){
 			for(auto &inst : bb){
 				if(inst.getOpcode() == llvm::Instruction::Alloca && inst.use_empty()){
+					//std::cout << "alloca instruction without any use" << '\n';
 					deadAllocas.insert(&inst);
 				}
 			}
 		}
 
 		for(auto &inst : deadAllocas){
+		//	std::cout << "deleted instruction" << '\n';
 			inst->eraseFromParent();
 		}
 		
