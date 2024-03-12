@@ -1,0 +1,26 @@
+// rda10.usc
+// Jianping Zeng (zeng207@purdue.edu)
+// Test for reaching definition and used-before-definition variables.
+//---------------------------------------------------------
+
+void foo(int k, int n) {
+    int a;
+    int b;
+    int x;
+    int y;
+    if (k == 0) {
+        a = k + 2;
+        x = 5;
+    } else {
+        a = k * 2;
+        x = 0;
+    }
+    k = a;
+    while (k < n) {
+        b = 2;
+        x = a + k;
+        y = a * b;
+        k = k + 1;
+    }
+    printf("%d\n", a + x + y);
+}

@@ -1,0 +1,30 @@
+Function 'count':
+entry:
+0   %i.addr = alloca i32
+1   %k.addr = alloca i32
+2   store i32 0, i32* %i.addr; DUMMY
+3   store i32 0, i32* %k.addr; DUMMY
+4   store i32 0, i32* %i.addr
+5   br label %while.cond
+
+while.cond:
+6   %i = load i32* %i.addr
+7   %lt = icmp slt i32 %i, 10
+8   br i1 %lt, label %while.body, label %while.end
+
+while.body:
+9   %k = load i32* %k.addr
+10   %add = add i32 %k, 1
+11   store i32 %add, i32* %k.addr
+12   %i1 = load i32* %i.addr
+13   %add2 = add i32 %i1, 1
+14   store i32 %add2, i32* %i.addr
+15   br label %while.cond
+
+while.end:
+16   %k3 = load i32* %k.addr
+17   %0 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([3 x i8]* @.str, i32 0, i32 0), i32 %k3)
+18   ret void
+
+Use of Uninitialized variables: {9 16}
+

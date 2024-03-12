@@ -1,0 +1,6 @@
+int main()
+{
+    char str[11] = "It worked!";
+    printf("%s\n", str);
+    return 0;
+}

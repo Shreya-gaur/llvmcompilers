@@ -1,0 +1,15 @@
+// rda08.usc
+// Jianping Zeng (zeng207@purdue.edu)
+// Test for reaching definition and used-before-definition variables.
+//---------------------------------------------------------
+
+void foo(int a, int b) {
+    int x;
+    int y;
+    x = a - b;
+    y = a * b;
+    while (y != a - b) {
+        a = a - 1;
+        x = a - b;
+    }
+}

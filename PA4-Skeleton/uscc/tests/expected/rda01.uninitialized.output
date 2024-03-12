@@ -1,0 +1,14 @@
+Function 'foo':
+entry:
+0   %y.addr = alloca i32
+1   %x.addr = alloca i32
+2   store i32 0, i32* %y.addr; DUMMY
+3   store i32 0, i32* %x.addr; DUMMY
+4   store i32 %x, i32* %x.addr
+5   %y = load i32* %y.addr
+6   %div = sdiv i32 %y, 3
+7   store i32 %div, i32* %x.addr
+8   ret void
+
+Use of Uninitialized variables: {5}
+

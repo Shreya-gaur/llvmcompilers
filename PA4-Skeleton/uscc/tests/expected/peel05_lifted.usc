@@ -1,0 +1,78 @@
+int main()
+{
+    int x = 2;
+    int y = 9;
+    int z = 100;
+    if (x < y)
+    {
+        printf("x < y\n");
+    }
+    else
+    {
+        z = 500;
+    }
+    if (x < 10)
+    {
+        z = x + 100;
+        printf("start!\n");
+        if (y < 20)
+        {
+            z = 10;
+            printf("Inner start!\n");
+            x = z + 4;
+            z = y + 3;
+            printf("y2 = %d\n", y);
+            ++y;
+            while (y < 20)
+            {
+                x = z + 4;
+                z = y + 3;
+                printf("y2 = %d\n", y);
+                ++y;
+            }
+        }
+        else
+        {
+            z = 10;
+            printf("Inner start!\n");
+        }
+        x = z + 4;
+        z = y + 3;
+        printf("y2 = %d\n", y);
+        ++x;
+        while (x < 10)
+        {
+            if (y < 20)
+            {
+                z = 10;
+                printf("Inner start!\n");
+                x = z + 4;
+                z = y + 3;
+                printf("y2 = %d\n", y);
+                ++y;
+                while (y < 20)
+                {
+                    x = z + 4;
+                    z = y + 3;
+                    printf("y2 = %d\n", y);
+                    ++y;
+                }
+            }
+            else
+            {
+                z = 10;
+                printf("Inner start!\n");
+            }
+            x = z + 4;
+            z = y + 3;
+            printf("y2 = %d\n", y);
+            ++x;
+        }
+    }
+    else
+    {
+        z = x + 100;
+        printf("start!\n");
+    }
+    return 0;
+}
