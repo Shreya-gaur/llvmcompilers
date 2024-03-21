@@ -145,10 +145,10 @@ AST_EMIT(ASTFunction)
 			// (Technically, iter actually has the value of the
 			// arg, not its address...but we will use the address
 			// member for this value)
-			argIdent.setAddress(iter);
+			//	argIdent.setAddress(iter);
 			
 			// Later PA: Write to this identifier
-			// argIdent.writeTo(ctx, iter);
+			argIdent.writeTo(ctx, iter);
 			
 			++i;
 			++iter;
@@ -616,13 +616,19 @@ AST_EMIT(ASTIfStmt)
     IRBuilder<> builder(ctx.mBlock);
     if (!value->getType()->isIntegerTy(1)) // check bool
         value = builder.CreateICmpNE(value, ctx.mZero); // if not bool, make it
-    
+   	ctx.mSSA.addBlock(ctx.mBlock, true);
+
     auto thenBody = BasicBlock::Create(ctx.mGlobal, "if.then", ctx.mFunc);
+	ctx.mSSA.addBlock(thenBody, true);
+
     auto end = BasicBlock::Create(ctx.mGlobal, "if.end", ctx.mFunc);
+	ctx.mSSA.addBlock(end);
+
     if (mElseStmt)
     {
         auto elseBody = BasicBlock::Create(ctx.mGlobal, "if.else", ctx.mFunc);
         builder.CreateCondBr(value, thenBody, elseBody);
+		ctx.mSSA.addBlock(elseBody, true);
 
         ctx.mBlock = elseBody;
         mElseStmt->emitIR(ctx);
@@ -637,6 +643,7 @@ AST_EMIT(ASTIfStmt)
     IRBuilder<> builderThen(ctx.mBlock);
     builderThen.CreateBr(end);
 
+	ctx.mSSA.sealBlock(end);
     ctx.mBlock = end;
 
 	return nullptr;
@@ -649,7 +656,8 @@ AST_EMIT(ASTWhileStmt)
     }
     else {
 	  // PA1: Implement
-      auto cond = BasicBlock::Create(ctx.mGlobal, "while.cond", ctx.mFunc);
+      auto cond = BasicBlock::Create(ctx.mGlobal, "while.cond", ctx.mFunc); //while header block
+	  ctx.mSSA.addBlock(cond);
 
       IRBuilder<> builder(ctx.mBlock);
       builder.CreateBr(cond); // unconditional branch in predecessor
@@ -661,13 +669,20 @@ AST_EMIT(ASTWhileStmt)
           value = builderCond.CreateICmpNE(value, ctx.mZero); // if not bool, make it
 
       auto body = BasicBlock::Create(ctx.mGlobal, "while.body", ctx.mFunc); // after expr's emitIR
+	  ctx.mSSA.addBlock(body);
+
       auto end = BasicBlock::Create(ctx.mGlobal, "while.end", ctx.mFunc);
+	  ctx.mSSA.addBlock(end);
+
       builderCond.CreateCondBr(value, body, end); // conditional branch in while.cond
+	  ctx.mSSA.sealBlock(body);
+	  ctx.mSSA.sealBlock(end);
 
       ctx.mBlock = body;
       this->mLoopStmt->emitIR(ctx);
       IRBuilder<> builderBody(ctx.mBlock);
       builderBody.CreateBr(cond);
+	  ctx.mSSA.sealBlock(cond);
       ctx.mBlock = end;
     }
     
