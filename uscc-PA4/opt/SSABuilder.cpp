@@ -58,11 +58,7 @@ void SSABuilder::reset()
 // For a specific variable in a specific basic block, write its value
 void SSABuilder::writeVariable(Identifier* var, BasicBlock* block, Value* value)
 {
-	// PA4: Implement
-	SubMap variable;
-	variable.insert({var, value});
-	SubMap* p_variable = &variable;
-	mVarDefs.insert({block, p_variable});
+	(*mVarDefs[block])[var] = value;
 }
 
 // Read the value assigned to the variable in the requested basic block
@@ -70,13 +66,13 @@ void SSABuilder::writeVariable(Identifier* var, BasicBlock* block, Value* value)
 Value* SSABuilder::readVariable(Identifier* var, BasicBlock* block)
 {
 	// PA4: Implement
-	if(mVarDefs[block] != nullptr){
-		if(mVarDefs.find(block) != mVarDefs.end()){
+	if(mVarDefs[block] != nullptr && mVarDefs.find(block) != mVarDefs.end()){
+		//if(mVarDefs.find(block) != mVarDefs.end()){
 			if(mVarDefs[block]->find(var) != mVarDefs[block]->end()){
 				auto variable = mVarDefs[block];
 				return variable->at(var);
 			}
-		}
+		//}
 	}
 	return readVariableRecursive(var, block);
 }
@@ -101,17 +97,10 @@ void SSABuilder::addBlock(BasicBlock* block, bool isSealed /* = false */)
 void SSABuilder::sealBlock(llvm::BasicBlock* block)
 {
 	// PA4: Implement
-	//SubPHI* subphis = mIncompletePhis[block];
-	//if(subphis != nullptr){
-		//for(auto &var : *subphis){
-		for(auto &var : *mIncompletePhis[block]){
-				addPhiOperands(var.first, var.second);
-		}
-		mSealedBlocks.insert(block);
-	//}
-	//else{
-	//	mSealedBlocks.insert(block);
-	//}
+	for(auto &var : *mIncompletePhis[block]){
+			addPhiOperands(var.first, var.second);
+	}
+	mSealedBlocks.insert(block);
 }
 
 // Recursively search predecessor blocks for a variable
@@ -132,14 +121,7 @@ Value* SSABuilder::readVariableRecursive(Identifier* var, BasicBlock* block)
 		}
 		retVal = phiNode;
 		
-		if(mIncompletePhis.find(block) == mIncompletePhis.end() || mIncompletePhis[block] == nullptr){
-			SubPHI variable;
-			mIncompletePhis[block] = new SubPHI();
-			mIncompletePhis[block]->insert({var, phiNode});
-		}
-		else{
-			mIncompletePhis[block]->insert({var, phiNode});
-		}
+		(*mIncompletePhis[block])[var] = phiNode;
 	}
 	else if (block->getSinglePredecessor()){ 
 		retVal = readVariable(var, block->getSinglePredecessor());
@@ -166,11 +148,7 @@ Value* SSABuilder::addPhiOperands(Identifier* var, PHINode* phi)
 	BasicBlock* block = phi->getParent();
 	if(pred_begin(block) != pred_end(block)){
 		for(auto it = pred_begin(block); it != pred_end(block); ++it){
-			if(mVarDefs.find(*it) != mVarDefs.end()){
-				if(mVarDefs[*it]->find(var) != mVarDefs[*it]->end()){
-					phi->addIncoming(readVariable(var, block), block);
-				}
-			}
+			phi->addIncoming(readVariable(var, *it), *it);
 		}
 	}
 
@@ -211,8 +189,8 @@ Value* SSABuilder::tryRemoveTrivialPhi(llvm::PHINode* phi)
 
 	phi->eraseFromParent();
 
-	for(auto use = phi->use_begin(); use != phi->use_end(); ++use){
-		if(cast<PHINode>(*use)->getType() == phi->getType())
+	for(auto use = phi->user_begin(); use != phi->user_end(); ++use){
+		if(cast<PHINode>(*use) == phi)
 			tryRemoveTrivialPhi(cast<PHINode>(*use));
 	}
 	return same;

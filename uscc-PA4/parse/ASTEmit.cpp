@@ -616,7 +616,7 @@ AST_EMIT(ASTIfStmt)
     IRBuilder<> builder(ctx.mBlock);
     if (!value->getType()->isIntegerTy(1)) // check bool
         value = builder.CreateICmpNE(value, ctx.mZero); // if not bool, make it
-   	ctx.mSSA.addBlock(ctx.mBlock, true);
+   	//ctx.mSSA.addBlock(ctx.mBlock, true);
 
     auto thenBody = BasicBlock::Create(ctx.mGlobal, "if.then", ctx.mFunc);
 	ctx.mSSA.addBlock(thenBody, true);
@@ -669,14 +669,14 @@ AST_EMIT(ASTWhileStmt)
           value = builderCond.CreateICmpNE(value, ctx.mZero); // if not bool, make it
 
       auto body = BasicBlock::Create(ctx.mGlobal, "while.body", ctx.mFunc); // after expr's emitIR
-	  ctx.mSSA.addBlock(body);
+	  ctx.mSSA.addBlock(body, true);
 
       auto end = BasicBlock::Create(ctx.mGlobal, "while.end", ctx.mFunc);
-	  ctx.mSSA.addBlock(end);
+	  ctx.mSSA.addBlock(end, true);
 
       builderCond.CreateCondBr(value, body, end); // conditional branch in while.cond
-	  ctx.mSSA.sealBlock(body);
-	  ctx.mSSA.sealBlock(end);
+	  //ctx.mSSA.sealBlock(body);
+	  //ctx.mSSA.sealBlock(end);
 
       ctx.mBlock = body;
       this->mLoopStmt->emitIR(ctx);
