@@ -17,13 +17,13 @@ public:
    
   Graph* inducedSubGraph = new Graph();
  
-  std::vector<Value*> phiFunctions;
+  std::set<Value*> phiFunctions;
   std::vector<std::set<llvm::Value *>> sccsSet;
 
   virtual bool runOnFunction(llvm::Function &F) override;
   void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
   void processSCC(std::set<Value*> scc);
-  void removeRedundantPhis(std::vector<Value*>);
+  void removeRedundantPhis(std::set<Value*>);
   void replaceSCCByValue(std::set<Value*> scc, Value* value);
 };
 
@@ -51,7 +51,7 @@ bool RedundantPhiRemoval::runOnFunction(Function &F) {
 		for(auto &inst : bb){
 			auto phiNode = dyn_cast_or_null<llvm::PHINode>(&inst); 
 			if(phiNode)
-				phiFunctions.push_back(phiNode);		
+				phiFunctions.insert(phiNode);		
 		}
 	}
 	
@@ -60,18 +60,18 @@ bool RedundantPhiRemoval::runOnFunction(Function &F) {
     return true;
 }
 
-void RedundantPhiRemoval::removeRedundantPhis(std::vector<Value*> phiFunctions){
+void RedundantPhiRemoval::removeRedundantPhis(std::set<Value*> phiFunctions){
 
 	inducedSubGraph->eraseAllNodes();
+	
 	std::vector<std::set<Value*>> sccs;
 	for(auto it = phiFunctions.begin(); it != phiFunctions.end(); ++it){
 		auto node = inducedSubGraph->getOrAddToGraph(*it); 
-
 		auto phiNode = dyn_cast_or_null<PHINode>(*it);
 		unsigned numOfIncomingValues = phiNode->getNumIncomingValues();
 		for(unsigned i=0; i<numOfIncomingValues; i++){
 			auto operand = phiNode->getIncomingValue(i);
-			if(dyn_cast_or_null<PHINode>(operand)){
+			if(find(phiFunctions.begin(), phiFunctions.end(), operand) != phiFunctions.end()){
 				auto operandNode = inducedSubGraph->getOrAddToGraph(operand);
 				node->addEdge(operandNode);
 			}
@@ -87,8 +87,10 @@ void RedundantPhiRemoval::removeRedundantPhis(std::vector<Value*> phiFunctions){
 
 void RedundantPhiRemoval::processSCC(std::set<Value*> scc){
 	
-	std::vector<Value*> inner;
-	std::vector<Value*> outerOps;
+	//std::vector<Value*> inner;
+	//std::vector<Value*> outerOps;
+	std::set<Value*> inner;
+	std::set<Value*> outerOps;
 		
 	for(auto phi = scc.begin(); phi !=scc.end(); ++phi){
 		bool isInner = true;
@@ -97,16 +99,16 @@ void RedundantPhiRemoval::processSCC(std::set<Value*> scc){
 		for(unsigned i=0; i<numOfIncomingValues; i++){
 			auto operand = phiNode->getIncomingValue(i);
 			if(scc.find(operand) == scc.end()){
-				outerOps.push_back(operand);
+				outerOps.insert(operand);
 				isInner = false;
 			}
 		}
 		if(isInner)
-			inner.push_back(*phi);
+			inner.insert(*phi);
 	}
 
 	if(outerOps.size() == 1){
-		replaceSCCByValue(scc, outerOps[outerOps.size() - 1]);
+		replaceSCCByValue(scc, *outerOps.begin());
 	}
 	else if(outerOps.size() > 1){
 		removeRedundantPhis(inner);
@@ -120,7 +122,7 @@ void RedundantPhiRemoval::replaceSCCByValue(std::set<Value*> scc, Value* value){
 		auto phiNode = dyn_cast_or_null<PHINode>(*phi);
 		phiNode->replaceAllUsesWith(value);
 		phiNode->eraseFromParent();
-		inducedSubGraph->eraseFromGraph(*phi);
+		//inducedSubGraph->eraseFromGraph(*phi);
 	}
 }
 

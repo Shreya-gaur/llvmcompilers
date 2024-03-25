@@ -67,12 +67,10 @@ Value* SSABuilder::readVariable(Identifier* var, BasicBlock* block)
 {
 	// PA4: Implement
 	if(mVarDefs[block] != nullptr && mVarDefs.find(block) != mVarDefs.end()){
-		//if(mVarDefs.find(block) != mVarDefs.end()){
-			if(mVarDefs[block]->find(var) != mVarDefs[block]->end()){
-				auto variable = mVarDefs[block];
-				return variable->at(var);
-			}
-		//}
+		if(mVarDefs[block]->find(var) != mVarDefs[block]->end()){
+			auto variable = mVarDefs[block];
+			return variable->at(var);
+		}
 	}
 	return readVariableRecursive(var, block);
 }
