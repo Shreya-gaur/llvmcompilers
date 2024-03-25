@@ -87,8 +87,6 @@ void RedundantPhiRemoval::removeRedundantPhis(std::set<Value*> phiFunctions){
 
 void RedundantPhiRemoval::processSCC(std::set<Value*> scc){
 	
-	//std::vector<Value*> inner;
-	//std::vector<Value*> outerOps;
 	std::set<Value*> inner;
 	std::set<Value*> outerOps;
 		
@@ -122,7 +120,6 @@ void RedundantPhiRemoval::replaceSCCByValue(std::set<Value*> scc, Value* value){
 		auto phiNode = dyn_cast_or_null<PHINode>(*phi);
 		phiNode->replaceAllUsesWith(value);
 		phiNode->eraseFromParent();
-		//inducedSubGraph->eraseFromGraph(*phi);
 	}
 }
 

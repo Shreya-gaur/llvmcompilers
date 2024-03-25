@@ -42,14 +42,12 @@ void SSABuilder::reset()
 	// PA4: Implement
 	for (auto& key : mVarDefs) 
 	{  
-		//std::cout << key << " " << value;  
 		delete key.second;
 	}
 	mVarDefs.clear();
 
 	for (auto& key : mIncompletePhis) 
 	{  
-		//std::cout << key << " " << value;  
 		delete key.second;
 	}
 	mIncompletePhis.clear();
